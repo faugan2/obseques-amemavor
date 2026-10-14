@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { BandeauDemo, Chargement, MessageErreur, classes } from '../composants/ui';
+import { Chargement, MessageErreur, classes } from '../composants/ui';
 import { IconeCadeau, IconeColombe, IconeFlecheBas, IconeFlecheHaut, IconeMaison } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { dateHeure, lienTelephone } from '../lib/format';
@@ -36,7 +36,6 @@ export function GabaritFamille({
 
   return (
     <div className="flex min-h-screen flex-col pb-24 sm:pb-0">
-      <BandeauDemo />
       <div className="bg-foret text-white">
         <div className="conteneur flex flex-wrap items-center justify-between gap-3 py-4">
           <Link to="/" className="flex items-center gap-2.5 text-white no-underline">

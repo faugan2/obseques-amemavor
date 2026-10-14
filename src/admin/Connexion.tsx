@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { messageAuth, useAuth } from '../lib/auth';
 import { useDonnees } from '../lib/donnees';
-import { BandeauDemo, Chargement, MessageErreur } from '../composants/ui';
+import { Chargement, MessageErreur } from '../composants/ui';
 import { IconeCadenas } from '../composants/icones';
 
 export default function Connexion() {
@@ -55,7 +55,6 @@ export default function Connexion() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <BandeauDemo />
       <div className="flex flex-1 flex-wrap">
         <div className="flex flex-[1_1_420px] flex-col justify-between gap-10 bg-foret p-8 text-white sm:p-12">
           <div className="text-sm font-bold">Obsèques · {parametres.nomDefunt}</div>

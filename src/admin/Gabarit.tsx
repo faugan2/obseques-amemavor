@@ -41,7 +41,6 @@ export function GabaritAdmin({ titre, sousTitre, actions, children }: { titre: s
 
   return (
     <div className="flex min-h-screen flex-col">
-      <BandeauDemo />
       <div className="flex flex-1 flex-col lg:flex-row">
         <aside className="pas-imprimer flex flex-col bg-foret text-[#D9E3DF] lg:w-[250px] lg:shrink-0">
           <div className="flex items-center justify-between gap-3 px-5 py-5">
