@@ -44,7 +44,7 @@ export const schemaDepense = z
     categorie: requis(200, 'Choisissez le poste du budget.'),
     responsable: texte(120),
     financement: texte(120),
-    montant: entier('Saisissez le montant total en FCFA (nombre entier).').refine((v) => v > 0, 'Le montant doit être supérieur à zéro.'),
+    montant: entier('Saisissez le montant total en FCFA (nombre entier).').refine((v) => v >= 0, 'Le montant doit être supérieur ou égal à zéro.'),
     montantPaye: entier('Saisissez la somme payée en FCFA (nombre entier).'),
     statut: z.enum(['prevue', 'partielle', 'payee']),
     beneficiaire: texte(200),
