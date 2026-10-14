@@ -76,11 +76,16 @@ Prérequis : Node.js 18 ou plus récent.
 
 ```bash
 npm install
-cp .env.example .env.local   # puis remplir avec la configuration Firebase
 npm run dev                  # http://localhost:5173
 ```
 
-Le fichier `.env.local` livré contient déjà la configuration du projet `my-streakers`, avec `VITE_ESPACE=demo`.
+La configuration du projet Firebase `my-streakers` est intégrée au code (`src/lib/firebase.ts`) : rien à configurer pour démarrer. Ce n'est pas un secret (elle est visible par tout visiteur du site) ; la protection repose sur les règles de sécurité.
+
+Un fichier `.env.local` (modèle : `.env.example`) est facultatif. Il sert à :
+- passer aux données réelles avec `VITE_ESPACE=reel` (par défaut : `demo`) ;
+- utiliser un autre projet Firebase.
+
+Après toute modification de `.env.local`, arrêter puis relancer `npm run dev`.
 
 ## 5. Configuration Firebase (une seule fois)
 
