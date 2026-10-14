@@ -3,16 +3,19 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from './firebase';
 import { DOC_PARAMETRES, nomCollection } from './espace';
-import { derniereMiseAJour, synthese, type Synthese } from './calculs';
-import { PARAMETRES_PAR_DEFAUT, type Contribution, type Depense, type Don, type Parametres } from '../types';
+import { budget, derniereMiseAJour, synthese, type Budget, type Synthese } from './calculs';
+import { PARAMETRES_PAR_DEFAUT, type Contribution, type Depense, type Devis, type Don, type Parametres, type Poste } from '../types';
 
 interface EtatDonnees {
   contributions: Contribution[];
   dons: Don[];
   depenses: Depense[];
+  postes: Poste[];
+  devis: Devis[];
   parametres: Parametres;
   parametresExistent: boolean;
   synthese: Synthese;
+  budget: Budget;
   derniereMaj: number;
   chargement: boolean;
   erreur: string | null;
@@ -31,6 +34,8 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [dons, setDons] = useState<Don[]>([]);
   const [depenses, setDepenses] = useState<Depense[]>([]);
+  const [postes, setPostes] = useState<Poste[]>([]);
+  const [devis, setDevis] = useState<Devis[]>([]);
   const [parametres, setParametres] = useState<Parametres>(PARAMETRES_PAR_DEFAUT);
   const [parametresExistent, setParametresExistent] = useState(false);
   const [charges, setCharges] = useState(0);
@@ -44,11 +49,11 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       fini();
     };
 
-    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses', poser: (l: T[]) => void) => {
+    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis', poser: (l: T[]) => void) => {
       let premier = true;
       return db
         .collection(nomCollection(nom))
-        .orderBy('date', 'desc')
+        .orderBy(nom === 'postes' ? 'ordre' : 'date', nom === 'postes' ? 'asc' : 'desc')
         .onSnapshot((snap) => {
           poser(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T));
           if (premier) {
@@ -62,6 +67,8 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       ecouter<Contribution>('contributions', setContributions),
       ecouter<Don>('dons', setDons),
       ecouter<Depense>('depenses', setDepenses),
+      ecouter<Poste>('postes', setPostes),
+      ecouter<Devis>('devis', setDevis),
     ];
 
     let premierParam = true;
@@ -87,14 +94,17 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       contributions,
       dons,
       depenses,
+      postes,
+      devis,
       parametres,
       parametresExistent,
       synthese: synthese(contributions, dons, depenses),
-      derniereMaj: derniereMiseAJour([contributions, dons, depenses]),
-      chargement: charges < 4,
+      budget: budget(postes, depenses, devis),
+      derniereMaj: derniereMiseAJour([contributions, dons, depenses, postes, devis]),
+      chargement: charges < 6,
       erreur,
     }),
-    [contributions, dons, depenses, parametres, parametresExistent, charges, erreur],
+    [contributions, dons, depenses, postes, devis, parametres, parametresExistent, charges, erreur],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

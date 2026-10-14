@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GabaritAdmin } from './Gabarit';
 import { Chargement, MessageErreur, classes } from '../composants/ui';
-import { IconeAnnuler, IconeCrayon, IconeReglages } from '../composants/icones';
+import { IconeAnnuler, IconeCorbeille, IconeCrayon, IconeReglages } from '../composants/icones';
 import { db } from '../lib/firebase';
 import { nomCollection } from '../lib/espace';
 import { dateHeure, montant } from '../lib/format';
@@ -29,6 +29,19 @@ const LIBELLES_CHAMPS: Record<string, string> = {
   beneficiaire: 'Bénéficiaire',
   justificatif: 'Justificatif',
   annule: 'Annulée',
+  type: 'Type',
+  groupe: 'Groupe familial',
+  posteId: 'Poste (identifiant)',
+  responsable: 'Responsable',
+  financement: 'Financement',
+  libelle: 'Poste',
+  prevision: 'Montant prévu',
+  prestataire: 'Prestataire',
+  objet: 'Objet',
+  ordre: 'Ordre',
+  groupesCotisation: 'Groupes familiaux',
+  sourcesFinancement: 'Sources de financement',
+  responsables: 'Responsables',
   cloture: 'Clôture',
   afficherNoms: 'Afficher les noms',
   afficherMontants: 'Afficher les montants',
@@ -48,7 +61,7 @@ const CHAMPS_CACHES = new Set(['contributeurCle', 'donateurCle']);
 function valeurLisible(cle: string, v: unknown): string {
   if (v === null || v === undefined || v === '') return '—';
   if (typeof v === 'boolean') return v ? 'oui' : 'non';
-  if (typeof v === 'number') return /montant|valeur/i.test(cle) ? `${montant(v)} FCFA` : String(v);
+  if (typeof v === 'number') return /montant|valeur|prevision/i.test(cle) ? `${montant(v)} FCFA` : String(v);
   if (Array.isArray(v)) return v.every((x) => typeof x !== 'object') ? v.join(', ') : `${v.length} élément${v.length > 1 ? 's' : ''}`;
   if (typeof v === 'object') return (v as { nom?: string }).nom ?? 'modifié';
   return String(v);
@@ -58,7 +71,7 @@ const ACTIONS: { valeur: ActionHistorique | 'tout'; libelle: string }[] = [
   { valeur: 'tout', libelle: 'Tout' },
   { valeur: 'creation', libelle: 'Créations' },
   { valeur: 'modification', libelle: 'Corrections' },
-  { valeur: 'annulation', libelle: 'Annulations' },
+  { valeur: 'suppression', libelle: 'Suppressions' },
   { valeur: 'parametres', libelle: 'Paramètres' },
 ];
 
@@ -66,6 +79,7 @@ const TITRES: Record<ActionHistorique, string> = {
   creation: 'Création',
   modification: 'Correction',
   annulation: 'Annulation',
+  suppression: 'Suppression',
   parametres: 'Paramètres modifiés',
 };
 
@@ -128,11 +142,11 @@ export default function Historique() {
                         'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
                         e.action === 'creation' && 'bg-recu-pale text-recu',
                         e.action === 'modification' && 'bg-attente-pale text-attente',
-                        e.action === 'annulation' && 'bg-depense-pale text-depense',
+                        (e.action === 'annulation' || e.action === 'suppression') && 'bg-depense-pale text-depense',
                         e.action === 'parametres' && 'bg-trait text-encre-douce',
                       )}
                     >
-                      {e.action === 'creation' ? <span className="text-xl font-bold">+</span> : e.action === 'modification' ? <IconeCrayon taille={16} /> : e.action === 'annulation' ? <IconeAnnuler taille={16} /> : <IconeReglages taille={16} />}
+                      {e.action === 'creation' ? <span className="text-xl font-bold">+</span> : e.action === 'modification' ? <IconeCrayon taille={16} /> : e.action === 'annulation' ? <IconeAnnuler taille={16} /> : e.action === 'suppression' ? <IconeCorbeille taille={16} /> : <IconeReglages taille={16} />}
                     </div>
                     {i < visibles.length - 1 && <div className="mt-1.5 w-0.5 flex-1 bg-trait" />}
                   </div>
@@ -152,6 +166,14 @@ export default function Historique() {
                             <span className="rounded-lg bg-recu-pale px-2.5 py-0.5 font-extrabold text-recu-fonce">{valeurLisible(k, e.apres?.[k])}</span>
                           </div>
                         ))}
+                      </div>
+                    ) : e.action === 'suppression' && e.avant ? (
+                      <div className="text-sm text-encre-douce">
+                        Élément supprimé :{' '}
+                        {['contributeur', 'donateur', 'designation', 'libelle', 'prestataire', 'montant', 'montantRecu', 'montantPaye', 'prevision', 'quantite', 'date']
+                          .filter((k) => e.avant && k in e.avant)
+                          .map((k) => `${LIBELLES_CHAMPS[k] ?? k} : ${valeurLisible(k, e.avant![k])}`)
+                          .join(' · ')}
                       </div>
                     ) : e.action === 'creation' && e.apres ? (
                       <div className="text-sm text-encre-douce">

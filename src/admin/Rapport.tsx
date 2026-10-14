@@ -5,18 +5,21 @@ import { IconeImprimante, IconeTelecharger } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { EST_DEMO } from '../lib/espace';
 import { exporterExcel } from '../lib/export';
+import { cotisationsParGroupe, typeDe } from '../lib/calculs';
 import { dateCourte, dateHeure, libelleMode, montant } from '../lib/format';
 
 const th = 'border-b-[1.5px] border-encre px-1.5 py-2 text-left font-bold';
 const td = 'border-b border-[#C9CDC4] px-1.5 py-2 align-top';
 
 export default function Rapport() {
-  const { contributions, dons, depenses, synthese: s, parametres } = useDonnees();
+  const { contributions, dons, depenses, postes, devis, synthese: s, budget: b, parametres } = useDonnees();
   const [erreur, setErreur] = useState('');
   const [export_, setExport] = useState(false);
 
-  const recues = contributions.filter((c) => !c.annule && c.montantRecu > 0);
-  const promesses = contributions.filter((c) => !c.annule && c.montant > c.montantRecu);
+  const recues = contributions.filter((c) => !c.annule && c.montantRecu > 0 && typeDe(c) === 'participation');
+  const cotAttendues = contributions.filter((c) => !c.annule && c.montant > c.montantRecu && typeDe(c) === 'cotisation');
+  const groupes = cotisationsParGroupe(contributions, parametres.groupesCotisation);
+  const promesses = contributions.filter((c) => !c.annule && c.montant > c.montantRecu && typeDe(c) === 'participation');
   const donsActifs = dons.filter((d) => !d.annule);
   const payees = depenses.filter((d) => !d.annule && d.montantPaye > 0);
   const nonSoldees = depenses.filter((d) => !d.annule && d.montant > d.montantPaye);
@@ -30,7 +33,7 @@ export default function Rapport() {
     setErreur('');
     setExport(true);
     try {
-      await exporterExcel(contributions, dons, depenses, parametres.nomDefunt);
+      await exporterExcel(contributions, dons, depenses, postes, parametres.nomDefunt, devis);
     } catch {
       setErreur("Le fichier Excel n'a pas pu être généré.");
     } finally {
@@ -66,29 +69,74 @@ export default function Rapport() {
           {EST_DEMO && <div className="whitespace-nowrap rounded-md border-[1.5px] border-or-fonce px-2.5 py-1.5 text-[11px] font-extrabold text-or-fonce">DONNÉES FICTIVES</div>}
         </header>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:grid-cols-3">
-          <div className="rounded-[10px] border border-[#C9CDC4] p-3.5"><div className="text-xs font-bold text-encre-douce">1. Contributions reçues</div><div className="text-xl font-extrabold text-recu-fonce">{montant(s.totalEncaisse)} FCFA</div></div>
-          <div className="rounded-[10px] border border-[#C9CDC4] p-3.5"><div className="text-xs font-bold text-encre-douce">2. Dépenses payées</div><div className="text-xl font-extrabold text-depense-fonce">{montant(s.totalDepense)} FCFA</div></div>
-          <div className="rounded-[10px] border-2 border-encre p-3.5"><div className="text-xs font-bold text-encre-douce">3. Solde disponible</div><div className="text-xl font-extrabold">{montant(s.solde)} FCFA</div></div>
-        </div>
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-titre text-[21px] font-normal">1. Point global</h2>
+          <table className="w-full border-collapse text-[14px]">
+            <tbody>
+              <tr><td className={td}>Cotisations de la famille</td><td className={`${td} text-right font-bold text-recu-fonce`}>{montant(s.totalCotisations)}</td></tr>
+              <tr><td className={td}>Participations en argent</td><td className={`${td} text-right font-bold text-recu-fonce`}>{montant(s.totalParticipations)}</td></tr>
+              <tr><td className={td}>Dépenses payées</td><td className={`${td} text-right font-bold text-depense-fonce`}>− {montant(s.totalDepense)}</td></tr>
+              <tr className="text-[16px]"><td className="px-1.5 py-2.5 font-extrabold">Reliquat (solde en caisse)</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.solde)} FCFA</td></tr>
+            </tbody>
+          </table>
+          <div className="text-xs text-encre-douce">
+            Budget prévu : {montant(b.totalPrevision)} FCFA · engagé : {montant(b.totalEngage)} FCFA · reste à payer sur dépenses engagées : {montant(s.resteAPayer)} FCFA ·
+            cotisations encore attendues : {montant(s.cotisationsAttendues)} FCFA.
+          </div>
+        </section>
 
         <section className="flex flex-col gap-2.5">
-          <h2 className="font-titre text-[21px] font-normal">4. Contributions financières reçues</h2>
-          {recues.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
+          <h2 className="font-titre text-[21px] font-normal">2. Budget : prévisions et réalisations</h2>
+          <table className="w-full border-collapse text-[12px]">
+            <thead><tr><th className={th}>Poste</th><th className={th}>Responsable</th><th className={th}>Financement</th><th className={`${th} text-right`}>Prévu</th><th className={`${th} text-right`}>Payé</th></tr></thead>
+            <tbody>
+              {b.lignes.filter((l) => l.prevision > 0 || l.engage > 0).map((l) => (
+                <tr key={l.poste.id}>
+                  <td className={td}>{l.poste.libelle}</td><td className={td}>{l.poste.responsable}</td><td className={td}>{l.poste.financement}</td>
+                  <td className={`${td} text-right`}>{l.prevision ? montant(l.prevision) : '—'}</td><td className={`${td} text-right`}>{l.realise ? montant(l.realise) : '—'}</td>
+                </tr>
+              ))}
+              <tr><td colSpan={3} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(b.totalPrevision)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(b.totalRealise)}</td></tr>
+            </tbody>
+          </table>
+          {b.nbPostesNonChiffres > 0 && <div className="text-xs text-encre-douce">{b.nbPostesNonChiffres} poste(s) encore à chiffrer ne figurent pas dans ce tableau.</div>}
+        </section>
+
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-titre text-[21px] font-normal">3. Cotisations de la famille</h2>
+          {groupes.every((g) => g.membres.length === 0) ? <p className="text-encre-pale">Aucune cotisation enregistrée.</p> : (
             <table className="w-full border-collapse text-[13px]">
-              <thead><tr><th className={th}>Date</th><th className={th}>Contributeur</th><th className={th}>Mode</th><th className={`${th} text-right`}>Reçu (FCFA)</th></tr></thead>
+              <thead><tr><th className={th}>Nom</th><th className={`${th} text-right`}>Quote-part</th><th className={`${th} text-right`}>Versé</th><th className={`${th} text-right`}>Reste</th></tr></thead>
               <tbody>
-                {recues.map((c) => (
-                  <tr key={c.id}><td className={td}>{dateCourte(c.date)}</td><td className={td}>{c.contributeur}</td><td className={td}>{libelleMode(c.mode)}</td><td className={`${td} text-right`}>{montant(c.montantRecu)}</td></tr>
-                ))}
-                <tr><td colSpan={3} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEncaisse)}</td></tr>
+                {groupes.filter((g) => g.membres.length > 0).map((g) => [
+                  <tr key={g.groupe}><td colSpan={4} className="bg-[#F3F4F0] px-1.5 py-1.5 font-bold">{g.groupe}</td></tr>,
+                  ...g.membres.filter((c) => !c.annule).map((c) => (
+                    <tr key={c.id}><td className={td}>{c.contributeur}</td><td className={`${td} text-right`}>{montant(c.montant)}</td><td className={`${td} text-right`}>{montant(c.montantRecu)}</td><td className={`${td} text-right`}>{montant(c.montant - c.montantRecu)}</td></tr>
+                  )),
+                  <tr key={`${g.groupe}-st`}><td className="px-1.5 py-1.5 font-bold">Sous-total</td><td className="px-1.5 py-1.5 text-right font-bold">{montant(g.attendu)}</td><td className="px-1.5 py-1.5 text-right font-bold">{montant(g.verse)}</td><td className="px-1.5 py-1.5 text-right font-bold">{montant(g.attendu - g.verse)}</td></tr>,
+                ])}
               </tbody>
             </table>
           )}
         </section>
 
         <section className="flex flex-col gap-2.5">
-          <h2 className="font-titre text-[21px] font-normal">5. Contributions matérielles (dons en nature)</h2>
+          <h2 className="font-titre text-[21px] font-normal">4. Participations en argent</h2>
+          {recues.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
+            <table className="w-full border-collapse text-[13px]">
+              <thead><tr><th className={th}>Date</th><th className={th}>Participant</th><th className={th}>Motif</th><th className={`${th} text-right`}>Reçu (FCFA)</th></tr></thead>
+              <tbody>
+                {recues.map((c) => (
+                  <tr key={c.id}><td className={td}>{dateCourte(c.date)}</td><td className={td}>{c.contributeur}</td><td className={td}>{c.motif || libelleMode(c.mode)}</td><td className={`${td} text-right`}>{montant(c.montantRecu)}</td></tr>
+                ))}
+                <tr><td colSpan={3} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalParticipations)}</td></tr>
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-titre text-[21px] font-normal">5. Participations en nature</h2>
           {donsActifs.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
             <table className="w-full border-collapse text-[13px]">
               <thead><tr><th className={th}>Date</th><th className={th}>Donateur</th><th className={th}>Bien</th><th className={`${th} text-right`}>Quantité</th><th className={th}>État</th></tr></thead>
@@ -103,13 +151,13 @@ export default function Rapport() {
         </section>
 
         <section className="flex flex-col gap-2.5">
-          <h2 className="font-titre text-[21px] font-normal">6. Dépenses effectuées</h2>
+          <h2 className="font-titre text-[21px] font-normal">6. Dépenses payées</h2>
           {payees.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
             <table className="w-full border-collapse text-[13px]">
-              <thead><tr><th className={th}>Date</th><th className={th}>Désignation</th><th className={th}>Catégorie</th><th className={th}>Justificatif</th><th className={`${th} text-right`}>Payé (FCFA)</th></tr></thead>
+              <thead><tr><th className={th}>Date</th><th className={th}>Désignation</th><th className={th}>Poste</th><th className={th}>Responsable · financement</th><th className={`${th} text-right`}>Payé (FCFA)</th></tr></thead>
               <tbody>
                 {payees.map((d) => (
-                  <tr key={d.id}><td className={td}>{dateCourte(d.date)}</td><td className={td}>{d.designation}{d.statut === 'partielle' && ' (partiel)'}</td><td className={td}>{d.categorie}</td><td className={td}>{d.reference || (d.justificatif ? 'Joint' : '—')}</td><td className={`${td} text-right`}>{montant(d.montantPaye)}</td></tr>
+                  <tr key={d.id}><td className={td}>{dateCourte(d.date)}</td><td className={td}>{d.designation}{d.statut === 'partielle' && ' (partiel)'}</td><td className={td}>{d.categorie}</td><td className={td}>{[d.responsable, d.financement].filter(Boolean).join(' · ') || '—'}</td><td className={`${td} text-right`}>{montant(d.montantPaye)}</td></tr>
                 ))}
                 <tr><td colSpan={4} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalDepense)}</td></tr>
               </tbody>
@@ -118,7 +166,7 @@ export default function Rapport() {
         </section>
 
         <section className="flex flex-col gap-2.5 rounded-[10px] border-[1.5px] border-dashed border-or-fonce p-4">
-          <h2 className="font-titre text-[21px] font-normal">7. Dépenses prévues et sommes promises (hors solde)</h2>
+          <h2 className="font-titre text-[21px] font-normal">7. Restes à payer et sommes attendues (hors solde)</h2>
           <table className="w-full border-collapse text-[13px]">
             <thead><tr><th className={th}>Type</th><th className={th}>Libellé</th><th className={`${th} text-right`}>Reste (FCFA)</th></tr></thead>
             <tbody>
@@ -126,13 +174,16 @@ export default function Rapport() {
                 <tr key={d.id}><td className={td}>Dépense {d.statut === 'partielle' ? 'partielle' : 'prévue'}</td><td className={td}>{d.designation}</td><td className={`${td} text-right`}>{montant(d.montant - d.montantPaye)}</td></tr>
               ))}
               {promesses.map((c) => (
-                <tr key={c.id}><td className={td}>Promesse</td><td className={td}>{c.contributeur}</td><td className={`${td} text-right`}>{montant(c.montant - c.montantRecu)}</td></tr>
+                <tr key={c.id}><td className={td}>Participation annoncée</td><td className={td}>{c.contributeur}</td><td className={`${td} text-right`}>{montant(c.montant - c.montantRecu)}</td></tr>
               ))}
-              {nonSoldees.length + promesses.length === 0 && <tr><td colSpan={3} className={td}>Aucun engagement en attente.</td></tr>}
+              {cotAttendues.map((c) => (
+                <tr key={c.id}><td className={td}>Cotisation attendue</td><td className={td}>{c.contributeur}</td><td className={`${td} text-right`}>{montant(c.montant - c.montantRecu)}</td></tr>
+              ))}
+              {nonSoldees.length + promesses.length + cotAttendues.length === 0 && <tr><td colSpan={3} className={td}>Aucun engagement en attente.</td></tr>}
             </tbody>
           </table>
           <div className="text-[13px] font-bold">
-            Solde prévisionnel (après règlement des dépenses et réception des promesses) : {montant(s.solde - s.resteAPayer + s.promessesEnAttente)} FCFA
+            Solde prévisionnel (après règlement des dépenses et réception des sommes attendues) : {montant(s.solde - s.resteAPayer + s.promessesEnAttente + s.cotisationsAttendues)} FCFA
           </div>
         </section>
 

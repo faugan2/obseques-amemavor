@@ -6,7 +6,7 @@ import { IconeCroix, IconePersonne } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { useAuth } from '../lib/auth';
 import { EST_DEMO } from '../lib/espace';
-import { chargerDonneesDemo, enregistrerParametres, televerserPhoto } from '../lib/operations';
+import { chargerDonneesDemo, enregistrerParametres, importerDonneesExcel, televerserPhoto } from '../lib/operations';
 import { telechargerSauvegarde } from '../lib/export';
 import { aujourdHui, dateCourte } from '../lib/format';
 import type { Ceremonie, Parametres as P } from '../types';
@@ -100,7 +100,8 @@ function EditeurCeremonies({
 }
 
 export default function Parametres() {
-  const { parametres, contributions, dons, depenses } = useDonnees();
+  const { parametres, contributions, dons, depenses, postes } = useDonnees();
+  const [importEnCours, setImportEnCours] = useState<{ fait: number; total: number } | null>(null);
   const { utilisateur, reinitialiser } = useAuth();
   const notifier = useNotifier();
   const [p, setP] = useState<P>(parametres);
@@ -229,9 +230,11 @@ export default function Parametres() {
 
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-5 rounded-[22px] bg-white p-6 shadow-flottante">
-            <h2 className="font-titre text-[22px] font-normal">Catégories</h2>
-            <ListeModifiable titre="Catégories de dépenses" valeurs={p.categoriesDepenses} onChange={(v) => maj('categoriesDepenses', v)} />
-            <ListeModifiable titre="Catégories de dons en nature" valeurs={p.categoriesDons} onChange={(v) => maj('categoriesDons', v)} />
+            <h2 className="font-titre text-[22px] font-normal">Listes proposées dans les formulaires</h2>
+            <ListeModifiable titre="Groupes familiaux (cotisations)" valeurs={p.groupesCotisation} onChange={(v) => maj('groupesCotisation', v)} />
+            <ListeModifiable titre="Sources de financement" valeurs={p.sourcesFinancement} onChange={(v) => maj('sourcesFinancement', v)} />
+            <ListeModifiable titre="Responsables" valeurs={p.responsables} onChange={(v) => maj('responsables', v)} />
+            <ListeModifiable titre="Catégories de participations en nature" valeurs={p.categoriesDons} onChange={(v) => maj('categoriesDons', v)} />
             <ListeModifiable titre="Unités de mesure proposées" valeurs={p.unites} onChange={(v) => maj('unites', v)} />
           </section>
 
@@ -256,6 +259,40 @@ export default function Parametres() {
               <button type="button" disabled={envoi} onClick={sauvegarde} className="min-h-[40px] rounded-[10px] bg-encre px-3.5 text-[13px] font-extrabold text-white disabled:opacity-60">
                 Télécharger maintenant
               </button>
+            </div>
+            <div className="h-px bg-trait" />
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold">Données des fichiers Excel</span>
+                  <span className="text-xs text-encre-pale">51 postes du budget, 21 dépenses, 4 participations (enveloppes Papa et Guy, Justin, Gaëlle Sepopo)</span>
+                </div>
+                <button
+                  type="button"
+                  disabled={envoi || importEnCours !== null || postes.length + depenses.length > 0}
+                  onClick={() =>
+                    executer(async () => {
+                      setImportEnCours({ fait: 0, total: 1 });
+                      try {
+                        await importerDonneesExcel({ postes: postes.map((x) => x.id) }, (fait, total) => setImportEnCours({ fait, total }));
+                      } finally {
+                        setImportEnCours(null);
+                      }
+                    }, 'Import terminé : budget de 10 999 250 FCFA, 774 034 FCFA de dépenses, 894 500 FCFA reçus.')
+                  }
+                  className="min-h-[40px] rounded-[10px] bg-foret px-3.5 text-[13px] font-extrabold text-white disabled:opacity-50"
+                >
+                  {importEnCours ? `Import… ${importEnCours.fait}/${importEnCours.total}` : postes.length + depenses.length > 0 ? 'Déjà des données' : 'Importer'}
+                </button>
+              </div>
+              {importEnCours && (
+                <div className="h-2 overflow-hidden rounded bg-trait" role="progressbar" aria-valuenow={importEnCours.fait} aria-valuemax={importEnCours.total}>
+                  <div className="h-full bg-recu transition-all" style={{ width: `${(importEnCours.fait / importEnCours.total) * 100}%` }} />
+                </div>
+              )}
+              {!importEnCours && postes.length + depenses.length > 0 && (
+                <span className="text-xs text-encre-pale">L'import n'est possible que sur un budget et des dépenses vides, pour éviter les doublons.</span>
+              )}
             </div>
             {EST_DEMO && (
               <>

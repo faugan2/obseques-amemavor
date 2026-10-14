@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { GabaritAdmin } from './Gabarit';
-import { BandeauFige, BoutonAnnulation, BoutonsEnregistrer, EffetCaisse, MotifCorrection, messageEcriture } from './communs';
+import { BandeauFige, BoutonSuppression, BoutonsEnregistrer, EffetCaisse, MotifCorrection, messageEcriture } from './communs';
 import { Champ, Chargement, MessageErreur, Segments, classes, useNotifier } from '../composants/ui';
 import { IconeAppareil, IconeDocument } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
@@ -12,7 +12,9 @@ import { MODES_PAIEMENT, type Justificatif, type ModePaiement, type StatutDepens
 
 const VIDE = {
   designation: '',
-  categorie: '',
+  posteId: '',
+  responsable: '',
+  financement: '',
   statut: 'payee' as StatutDepense,
   montant: '',
   dejaPaye: '',
@@ -46,12 +48,16 @@ function ChampMontant({ id, libelle, valeur, onChange, erreur, aide }: { id: str
 export default function FormDepense() {
   const { id } = useParams();
   const edition = Boolean(id);
-  const { depenses, parametres, chargement } = useDonnees();
+  const { depenses, postes, parametres, chargement } = useDonnees();
+  const [params] = useSearchParams();
   const existante = depenses.find((d) => d.id === id);
   const naviguer = useNavigate();
   const notifier = useNotifier();
 
-  const [f, setF] = useState(VIDE);
+  const [f, setF] = useState(() => {
+    const p = postes.find((x) => x.id === params.get('poste'));
+    return p ? { ...VIDE, posteId: p.id, responsable: p.responsable, financement: p.financement } : VIDE;
+  });
   const [fichier, setFichier] = useState<File | null>(null);
   const [motifCorrection, setMotifCorrection] = useState('');
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
@@ -63,7 +69,9 @@ export default function FormDepense() {
     if (edition && existante && !initialise) {
       setF({
         designation: existante.designation,
-        categorie: existante.categorie,
+        posteId: existante.posteId ?? '',
+        responsable: existante.responsable ?? '',
+        financement: existante.financement ?? '',
         statut: existante.statut,
         montant: String(existante.montant),
         dejaPaye: String(existante.montantPaye),
@@ -83,6 +91,7 @@ export default function FormDepense() {
   if (chargement) return <GabaritAdmin titre="Dépense"><Chargement /></GabaritAdmin>;
   if (edition && !existante) return <GabaritAdmin titre="Dépense"><MessageErreur>Cette dépense est introuvable.</MessageErreur></GabaritAdmin>;
 
+  const posteChoisi = postes.find((p) => p.id === f.posteId);
   const total = lireMontant(f.montant);
   const paye = f.statut === 'payee' ? total : f.statut === 'prevue' ? 0 : lireMontant(f.dejaPaye);
   const payeConnu = Number.isFinite(paye) ? paye : 0;
@@ -94,7 +103,10 @@ export default function FormDepense() {
     const brut = {
       date: f.date,
       designation: f.designation.trim(),
-      categorie: f.categorie,
+      posteId: f.posteId,
+      categorie: posteChoisi?.libelle ?? (f.posteId ? existante?.categorie ?? '' : ''),
+      responsable: f.responsable.trim(),
+      financement: f.financement.trim(),
       montant: total,
       montantPaye: paye,
       statut: f.statut,
@@ -106,6 +118,7 @@ export default function FormDepense() {
     };
     const res = schemaDepense.safeParse(brut);
     const errs = res.success ? {} : erreursParChamp(res.error);
+    if (!f.posteId) errs.categorie = 'Choisissez le poste du budget.';
     if (edition && motifCorrection.trim().length < 3) errs.motifCorrection = 'Indiquez le motif de la correction.';
     setErreurs(errs);
     if (Object.keys(errs).length > 0 || !res.success) return;
@@ -119,14 +132,14 @@ export default function FormDepense() {
       if (edition && existante) {
         await modifier('depenses', existante.id, existante as unknown as Record<string, unknown>, donnees, libelle, motifCorrection.trim());
         notifier('Correction de la dépense enregistrée. Le solde a été recalculé.');
-        naviguer('/admin');
+        naviguer('/admin/depenses');
       } else {
         await creer('depenses', donnees, libelle, idDepense);
         notifier(`Dépense « ${donnees.designation} » enregistrée${donnees.montantPaye ? ` (${fcfa(donnees.montantPaye)} payés)` : ''}.`);
         if (ajouterAutre) {
-          setF({ ...VIDE, date: f.date });
+          setF({ ...VIDE, date: f.date, posteId: f.posteId, responsable: f.responsable, financement: f.financement });
           setFichier(null);
-        } else naviguer('/admin');
+        } else naviguer('/admin/depenses');
       }
     } catch (e) {
       setErreurGenerale(messageEcriture(e));
@@ -161,12 +174,36 @@ export default function FormDepense() {
               <Champ id="designation" libelle="Désignation" erreur={erreurs.designation}>
                 <input id="designation" className={classes('champ', erreurs.designation && 'champ-erreur')} placeholder="ex. Location de 100 chaises" value={f.designation} onChange={(e) => maj('designation', e.target.value)} />
               </Champ>
-              <Champ id="categorie" libelle="Catégorie" erreur={erreurs.categorie}>
-                <select id="categorie" className={classes('champ px-3', erreurs.categorie && 'champ-erreur')} value={f.categorie} onChange={(e) => maj('categorie', e.target.value)}>
+              <Champ id="poste" libelle="Poste du budget" erreur={erreurs.categorie}>
+                <select
+                  id="poste"
+                  className={classes('champ px-3', erreurs.categorie && 'champ-erreur')}
+                  value={f.posteId}
+                  onChange={(e) => {
+                    const p = postes.find((x) => x.id === e.target.value);
+                    setF((x) => ({
+                      ...x,
+                      posteId: e.target.value,
+                      // Reprend le responsable et le financement du poste s'ils ne sont pas encore remplis.
+                      responsable: x.responsable || p?.responsable || '',
+                      financement: x.financement || p?.financement || '',
+                    }));
+                  }}
+                >
                   <option value="">Choisir…</option>
-                  {parametres.categoriesDepenses.map((c) => <option key={c} value={c}>{c}</option>)}
-                  {f.categorie && !parametres.categoriesDepenses.includes(f.categorie) && <option value={f.categorie}>{f.categorie}</option>}
+                  {postes.filter((p) => !p.annule).map((p) => <option key={p.id} value={p.id}>{p.libelle}</option>)}
                 </select>
+              </Champ>
+            </div>
+
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
+              <Champ id="responsable" libelle="Responsable" facultatif aide="La personne qui a payé ou engagé la dépense.">
+                <input id="responsable" list="liste-responsables" className="champ" placeholder="ex. Carole" value={f.responsable} onChange={(e) => maj('responsable', e.target.value)} />
+                <datalist id="liste-responsables">{parametres.responsables.map((r) => <option key={r} value={r} />)}</datalist>
+              </Champ>
+              <Champ id="financement" libelle="Source de financement" facultatif aide="L'enveloppe ou la personne qui a fourni l'argent.">
+                <input id="financement" list="liste-financements" className="champ" placeholder="ex. Enveloppe Papa" value={f.financement} onChange={(e) => maj('financement', e.target.value)} />
+                <datalist id="liste-financements">{parametres.sourcesFinancement.map((r) => <option key={r} value={r} />)}</datalist>
               </Champ>
             </div>
 
@@ -238,10 +275,12 @@ export default function FormDepense() {
           </fieldset>
           {edition && existante && !fige && (
             <div className="border-t border-trait pt-4">
-              <BoutonAnnulation
+              <BoutonSuppression
                 collection="depenses"
                 id={existante.id}
                 libelle={`Dépense · ${existante.designation}`}
+                donnees={existante as unknown as Record<string, unknown>}
+                retour="/admin/depenses"
                 description={<>« {existante.designation} » · {fcfa(existante.montant)}.</>}
               />
             </div>

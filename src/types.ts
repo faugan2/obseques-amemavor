@@ -23,12 +23,19 @@ export interface Trace {
   derniereOperation: string;
 }
 
+/** Cotisation = quote-part attendue de la famille ; participation = don libre d'un proche. */
+export type TypeContribution = 'cotisation' | 'participation';
+
 /**
- * Contribution financière.
- * montant      = somme annoncée (ou reçue si versée d'un coup)
+ * Entrée d'argent dans la caisse (cotisation ou participation).
+ * montant      = somme attendue (quote-part) ou annoncée
  * montantRecu  = somme réellement encaissée (seule comptée dans la caisse)
  */
 export interface Contribution extends Trace {
+  /** Absent sur les anciens enregistrements : considéré comme « participation ». */
+  type?: TypeContribution;
+  /** Groupe familial (cotisations uniquement), ex. « Enfants du défunt ». */
+  groupe?: string;
   contributeur: string;
   contributeurCle: string;
   date: string; // AAAA-MM-JJ
@@ -78,7 +85,14 @@ export interface Justificatif {
 export interface Depense extends Trace {
   date: string;
   designation: string;
+  /** Poste du budget auquel la dépense se rattache ('' = hors budget). */
+  posteId?: string;
+  /** Libellé du poste (copie, pour l'affichage et les exports). */
   categorie: string;
+  /** Personne qui a engagé la dépense (ex. Carole). */
+  responsable?: string;
+  /** Source de l'argent utilisé (ex. Enveloppe Papa). */
+  financement?: string;
   montant: number;
   montantPaye: number;
   statut: StatutDepense;
@@ -86,6 +100,38 @@ export interface Depense extends Trace {
   mode: ModePaiement;
   reference: string;
   justificatif: Justificatif | null;
+  commentaire: string;
+}
+
+/** Poste du budget prévisionnel. Le réalisé est calculé à partir des dépenses rattachées. */
+export interface Poste extends Trace {
+  libelle: string;
+  /** Montant prévu en FCFA (0 = non encore chiffré). */
+  prevision: number;
+  responsable: string;
+  financement: string;
+  commentaire: string;
+  /** Ordre d'affichage. */
+  ordre: number;
+}
+
+export type StatutDevis = 'recu' | 'retenu' | 'refuse';
+
+export const STATUTS_DEVIS: { valeur: StatutDevis; libelle: string }[] = [
+  { valeur: 'recu', libelle: 'Reçu, à étudier' },
+  { valeur: 'retenu', libelle: 'Retenu' },
+  { valeur: 'refuse', libelle: 'Non retenu' },
+];
+
+/** Devis d'un prestataire, rattaché à un poste du budget. */
+export interface Devis extends Trace {
+  prestataire: string;
+  posteId: string;
+  objet: string;
+  montant: number;
+  date: string;
+  statut: StatutDevis;
+  reference: string;
   commentaire: string;
 }
 
@@ -112,12 +158,15 @@ export interface Parametres {
   categoriesDepenses: string[];
   categoriesDons: string[];
   unites: string[];
+  groupesCotisation: string[];
+  sourcesFinancement: string[];
+  responsables: string[];
   cloture: boolean;
   derniereSauvegarde: string;
   derniereOperation?: string;
 }
 
-export type ActionHistorique = 'creation' | 'modification' | 'annulation' | 'parametres';
+export type ActionHistorique = 'creation' | 'modification' | 'annulation' | 'suppression' | 'parametres';
 
 export interface EntreeHistorique {
   id: string;
@@ -163,6 +212,9 @@ export const PARAMETRES_PAR_DEFAUT: Parametres = {
   ],
   categoriesDons: ['Boissons', 'Nourriture', 'Matériel', 'Transport', 'Hébergement', 'Logistique', 'Autre'],
   unites: ['cartons', 'sacs', 'bouteilles', 'casiers', 'unités', 'chaises', 'bâches', 'prestations'],
+  groupesCotisation: ['Enfants du défunt', 'Frères et sœurs du défunt', 'Famille paternelle', 'Famille maternelle'],
+  sourcesFinancement: ['Enveloppe Papa', 'Enveloppe Guy', 'Justin', 'Caisse des obsèques'],
+  responsables: ['Carole', 'Charity', 'Manassé', 'Fo Atsou', 'Vincent fils', 'Odile', 'Yawo (Elé)', 'Vincent (Elé)'],
   cloture: false,
   derniereSauvegarde: '',
 };

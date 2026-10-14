@@ -9,6 +9,8 @@ const requis = (max: number, msg: string) => z.string().trim().min(1, msg).max(m
 
 export const schemaContribution = z
   .object({
+    type: z.enum(['cotisation', 'participation']),
+    groupe: texte(80),
     contributeur: requis(120, 'Indiquez le nom du contributeur.'),
     contributeurCle: z.string().min(1),
     date,
@@ -38,7 +40,10 @@ export const schemaDepense = z
   .object({
     date,
     designation: requis(200, 'Indiquez la désignation de la dépense.'),
-    categorie: requis(80, 'Choisissez une catégorie.'),
+    posteId: z.string().max(100),
+    categorie: requis(200, 'Choisissez le poste du budget.'),
+    responsable: texte(120),
+    financement: texte(120),
     montant: entier('Saisissez le montant total en FCFA (nombre entier).').refine((v) => v > 0, 'Le montant doit être supérieur à zéro.'),
     montantPaye: entier('Saisissez la somme payée en FCFA (nombre entier).'),
     statut: z.enum(['prevue', 'partielle', 'payee']),
@@ -56,6 +61,26 @@ export const schemaDepense = z
     path: ['montantPaye'],
     message: 'Pour un paiement partiel, la somme payée doit être entre 0 et le montant total.',
   });
+
+export const schemaPoste = z.object({
+  libelle: requis(200, 'Indiquez le nom du poste.'),
+  prevision: entier('Saisissez le montant prévu en FCFA (nombre entier, 0 si non chiffré).'),
+  responsable: texte(120),
+  financement: texte(120),
+  commentaire: texte(1000),
+  ordre: z.number().int(),
+});
+
+export const schemaDevis = z.object({
+  prestataire: requis(200, 'Indiquez le nom du prestataire.'),
+  posteId: z.string().max(100),
+  objet: texte(300),
+  montant: entier('Saisissez le montant du devis en FCFA (nombre entier).').refine((v) => v > 0, 'Le montant doit être supérieur à zéro.'),
+  date,
+  statut: z.enum(['recu', 'retenu', 'refuse']),
+  reference: texte(120),
+  commentaire: texte(1000),
+});
 
 /** Transforme les erreurs zod en { champ: message }. */
 export function erreursParChamp(e: z.ZodError): Record<string, string> {

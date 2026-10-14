@@ -1,6 +1,5 @@
-// Règles de calcul (section 8 du cahier des charges).
-// Fonctions pures : aucun total n'est jamais saisi à la main.
-import type { Contribution, Depense, Don, StatutDepense } from '../types';
+// Règles de calcul. Fonctions pures : aucun total n'est jamais saisi à la main.
+import type { Contribution, Depense, Devis, Don, Poste, StatutDepense, TypeContribution } from '../types';
 
 /** Normalise un nom pour reconnaître la même personne malgré la casse, les accents ou l'ordre des mots. */
 export function cleNom(nom: string): string {
@@ -14,6 +13,11 @@ export function cleNom(nom: string): string {
     .filter(Boolean)
     .sort()
     .join(' ');
+}
+
+/** Les anciens enregistrements sans type sont des participations. */
+export function typeDe(c: Pick<Contribution, 'type'>): TypeContribution {
+  return c.type === 'cotisation' ? 'cotisation' : 'participation';
 }
 
 export function statutDepense(montant: number, montantPaye: number): StatutDepense {
@@ -30,17 +34,28 @@ export function statutContribution(c: Pick<Contribution, 'montant' | 'montantRec
   return 'partielle';
 }
 
-const actives = <T extends { annule: boolean }>(liste: T[]) => liste.filter((x) => !x.annule);
+const actives = <T extends { annule?: boolean }>(liste: T[]) => liste.filter((x) => !x.annule);
+const somme = <T,>(liste: T[], f: (x: T) => number) => liste.reduce((s, x) => s + f(x), 0);
 
 export interface Synthese {
-  totalEncaisse: number;
+  /** Cotisations réellement versées. */
+  totalCotisations: number;
+  /** Quotes-parts restant à verser. */
+  cotisationsAttendues: number;
+  nbCotisants: number;
+  /** Participations en argent réellement reçues. */
+  totalParticipations: number;
+  /** Participations annoncées mais pas encore reçues. */
   promessesEnAttente: number;
   nbPromesses: number;
+  /** Cotisations + participations reçues. */
+  totalEncaisse: number;
   totalDepense: number;
   resteAPayer: number;
   nbDepensesNonSoldees: number;
   solde: number;
   nbContributeurs: number;
+  nbParticipants: number;
   nbContributions: number;
   nbDons: number;
   nbDepenses: number;
@@ -49,27 +64,31 @@ export interface Synthese {
 
 export function synthese(contributions: Contribution[], dons: Don[], depenses: Depense[]): Synthese {
   const c = actives(contributions);
+  const cot = c.filter((x) => typeDe(x) === 'cotisation');
+  const par = c.filter((x) => typeDe(x) === 'participation');
   const d = actives(depenses);
 
-  const totalEncaisse = c.reduce((s, x) => s + x.montantRecu, 0);
-  const promessesEnAttente = c.reduce((s, x) => s + Math.max(0, x.montant - x.montantRecu), 0);
-  const nbPromesses = c.filter((x) => x.montant > x.montantRecu).length;
+  const totalCotisations = somme(cot, (x) => x.montantRecu);
+  const totalParticipations = somme(par, (x) => x.montantRecu);
+  const totalEncaisse = totalCotisations + totalParticipations;
+  const totalDepense = somme(d, (x) => x.montantPaye);
 
-  const totalDepense = d.reduce((s, x) => s + x.montantPaye, 0);
-  const resteAPayer = d.reduce((s, x) => s + Math.max(0, x.montant - x.montantPaye), 0);
-  const nbDepensesNonSoldees = d.filter((x) => x.montant > x.montantPaye).length;
-
-  const contributeurs = new Set(c.filter((x) => x.montantRecu > 0).map((x) => x.contributeurCle || cleNom(x.contributeur)));
+  const distincts = (l: Contribution[]) => new Set(l.filter((x) => x.montantRecu > 0).map((x) => x.contributeurCle || cleNom(x.contributeur))).size;
 
   return {
+    totalCotisations,
+    cotisationsAttendues: somme(cot, (x) => Math.max(0, x.montant - x.montantRecu)),
+    nbCotisants: distincts(cot),
+    totalParticipations,
+    promessesEnAttente: somme(par, (x) => Math.max(0, x.montant - x.montantRecu)),
+    nbPromesses: par.filter((x) => x.montant > x.montantRecu).length,
     totalEncaisse,
-    promessesEnAttente,
-    nbPromesses,
     totalDepense,
-    resteAPayer,
-    nbDepensesNonSoldees,
+    resteAPayer: somme(d, (x) => Math.max(0, x.montant - x.montantPaye)),
+    nbDepensesNonSoldees: d.filter((x) => x.montant > x.montantPaye).length,
     solde: totalEncaisse - totalDepense,
-    nbContributeurs: contributeurs.size,
+    nbContributeurs: distincts(c),
+    nbParticipants: distincts(par),
     nbContributions: c.length,
     nbDons: actives(dons).length,
     nbDepenses: d.length,
@@ -77,21 +96,65 @@ export function synthese(contributions: Contribution[], dons: Don[], depenses: D
   };
 }
 
-export interface LigneCategorie {
-  categorie: string;
-  paye: number;
-  reste: number;
+// ---------------------------------------------------------------- Budget
+
+export interface LigneBudget {
+  poste: Poste;
+  prevision: number;
+  /** Somme réellement payée sur les dépenses du poste. */
+  realise: number;
+  /** Montant total des dépenses du poste (payé + reste à payer). */
+  engage: number;
+  resteAPayer: number;
+  /** prévision − engagé (négatif = dépassement). */
+  ecart: number;
+  nbDepenses: number;
+  /** Montant du devis retenu, s'il y en a un. */
+  devisRetenu: number | null;
 }
 
-export function depensesParCategorie(depenses: Depense[]): LigneCategorie[] {
-  const map = new Map<string, LigneCategorie>();
-  for (const d of actives(depenses)) {
-    const l = map.get(d.categorie) ?? { categorie: d.categorie, paye: 0, reste: 0 };
-    l.paye += d.montantPaye;
-    l.reste += Math.max(0, d.montant - d.montantPaye);
-    map.set(d.categorie, l);
-  }
-  return [...map.values()].sort((a, b) => b.paye + b.reste - (a.paye + a.reste));
+export interface Budget {
+  lignes: LigneBudget[];
+  totalPrevision: number;
+  totalRealise: number;
+  totalEngage: number;
+  /** Dépenses rattachées à aucun poste existant. */
+  horsBudget: { realise: number; engage: number; nb: number };
+  nbPostesNonChiffres: number;
+  nbDepassements: number;
+}
+
+export function budget(postes: Poste[], depenses: Depense[], devis: Devis[] = []): Budget {
+  const d = actives(depenses);
+  const ids = new Set(postes.map((p) => p.id));
+  const lignes = [...actives(postes)]
+    .sort((a, b) => a.ordre - b.ordre || a.libelle.localeCompare(b.libelle))
+    .map<LigneBudget>((poste) => {
+      const liees = d.filter((x) => x.posteId === poste.id);
+      const realise = somme(liees, (x) => x.montantPaye);
+      const engage = somme(liees, (x) => x.montant);
+      const retenu = actives(devis).find((v) => v.posteId === poste.id && v.statut === 'retenu');
+      return {
+        poste,
+        prevision: poste.prevision,
+        realise,
+        engage,
+        resteAPayer: engage - realise,
+        ecart: poste.prevision - engage,
+        nbDepenses: liees.length,
+        devisRetenu: retenu ? retenu.montant : null,
+      };
+    });
+  const hors = d.filter((x) => !x.posteId || !ids.has(x.posteId));
+  return {
+    lignes,
+    totalPrevision: somme(lignes, (l) => l.prevision),
+    totalRealise: somme(lignes, (l) => l.realise) + somme(hors, (x) => x.montantPaye),
+    totalEngage: somme(lignes, (l) => l.engage) + somme(hors, (x) => x.montant),
+    horsBudget: { realise: somme(hors, (x) => x.montantPaye), engage: somme(hors, (x) => x.montant), nb: hors.length },
+    nbPostesNonChiffres: lignes.filter((l) => l.prevision === 0).length,
+    nbDepassements: lignes.filter((l) => l.prevision > 0 && l.engage > l.prevision).length,
+  };
 }
 
 export interface ResumeDon {
@@ -112,7 +175,27 @@ export function donsParCategorie(dons: Don[]): ResumeDon[] {
   return [...map.values()];
 }
 
-export type TypeOperation = 'contribution' | 'don' | 'depense';
+export interface GroupeCotisation {
+  groupe: string;
+  attendu: number;
+  verse: number;
+  membres: Contribution[];
+}
+
+/** Cotisations regroupées par groupe familial, dans l'ordre des Paramètres. */
+export function cotisationsParGroupe(contributions: Contribution[], ordreGroupes: string[]): GroupeCotisation[] {
+  const cot = contributions.filter((c) => typeDe(c) === 'cotisation');
+  const noms = [...ordreGroupes, ...new Set(cot.map((c) => c.groupe || 'Autres').filter((g) => !ordreGroupes.includes(g)))];
+  return noms.map((groupe) => {
+    const membres = cot
+      .filter((c) => (c.groupe || 'Autres') === groupe)
+      .sort((a, b) => a.contributeur.localeCompare(b.contributeur));
+    const act = actives(membres);
+    return { groupe, attendu: somme(act, (c) => c.montant), verse: somme(act, (c) => c.montantRecu), membres };
+  });
+}
+
+export type TypeOperation = 'cotisation' | 'participation' | 'don' | 'depense';
 
 export interface Operation {
   type: TypeOperation;
@@ -131,17 +214,17 @@ function ms(t: { toMillis?: () => number } | null | undefined): number {
   return t && typeof t.toMillis === 'function' ? t.toMillis() : 0;
 }
 
-/** Fusionne les trois types d'opérations, triées de la plus récente à la plus ancienne. */
+/** Fusionne toutes les opérations, triées de la plus récente à la plus ancienne. */
 export function toutesOperations(contributions: Contribution[], dons: Don[], depenses: Depense[]): Operation[] {
   const ops: Operation[] = [
     ...contributions.map<Operation>((c) => ({
-      type: 'contribution',
+      type: typeDe(c),
       id: c.id,
       date: c.date,
       ordre: ms(c.creeLe),
       libelle: c.contributeur,
-      detail: c.motif,
-      categorie: c.motif,
+      detail: typeDe(c) === 'cotisation' ? c.groupe || '' : c.motif,
+      categorie: typeDe(c) === 'cotisation' ? c.groupe || 'Cotisation' : c.motif,
       montant: c.montantRecu,
       annule: c.annule,
       source: c,
@@ -164,7 +247,7 @@ export function toutesOperations(contributions: Contribution[], dons: Don[], dep
       date: d.date,
       ordre: ms(d.creeLe),
       libelle: d.designation,
-      detail: d.beneficiaire,
+      detail: d.responsable || d.beneficiaire,
       categorie: d.categorie,
       montant: d.montantPaye,
       annule: d.annule,

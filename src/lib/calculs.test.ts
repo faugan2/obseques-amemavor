@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ceremoniesAVenir, cleNom, depensesParCategorie, donsParCategorie, statutDepense, synthese, toutesOperations } from './calculs';
+import { budget, ceremoniesAVenir, cleNom, cotisationsParGroupe, donsParCategorie, statutDepense, synthese, toutesOperations } from './calculs';
+import initiales from './donneesInitiales.json';
 import { DEMO_CONTRIBUTIONS, DEMO_DEPENSES, DEMO_DONS } from './demo';
 import { fcfa, jourLong, lienTelephone, lireMontant } from './format';
-import { PARAMETRES_PAR_DEFAUT, type Contribution, type Depense, type Don } from '../types';
+import { PARAMETRES_PAR_DEFAUT, type Contribution, type Depense, type Don, type Poste } from '../types';
 
 const trace = (id: string) => ({
   id,
@@ -119,10 +120,58 @@ describe('Outils', () => {
     expect(ops[0].libelle).toBe('Location de chaises');
     expect(ops[ops.length - 1].libelle).toBe('Kodjo Exemple');
   });
-  it('regroupe les dépenses par catégorie', () => {
-    expect(depensesParCategorie(depenses)).toEqual([
-      { categorie: 'Boissons et nourriture', paye: 30000, reste: 0 },
-      { categorie: 'Location de chaises, bâches et matériel', paye: 0, reste: 20000 },
-    ]);
+});
+
+// Données des fichiers Excel remis par le DG (scripts/importer_excel.py).
+const imp = {
+  postes: initiales.postes.map((p) => ({ ...p, ...trace(p.id) })) as unknown as Poste[],
+  depenses: initiales.depenses.map((d, i) => ({ ...d, ...trace(`d${i}`) })) as unknown as Depense[],
+  contributions: initiales.contributions.map((c, i) => ({ ...c, contributeurCle: cleNom(c.contributeur), ...trace(`c${i}`) })) as unknown as Contribution[],
+};
+
+describe('Import des fichiers Excel', () => {
+  const s = synthese(imp.contributions, [], imp.depenses);
+  const b = budget(imp.postes, imp.depenses);
+
+  it('reprend le budget prévu de 10 999 250 FCFA', () => expect(b.totalPrevision).toBe(10999250));
+  it('reprend les 729 534 FCFA de dépenses courantes, plus 44 500 FCFA de morgue', () => expect(s.totalDepense).toBe(729534 + 44500));
+  it('compte les enveloppes et la participation de Gaëlle Sepopo comme entrées', () => expect(s.totalParticipations).toBe(450000 + 300000 + 44500 + 100000));
+  it('retrouve le solde du fichier (20 466) augmenté de la participation (100 000)', () => expect(s.solde).toBe(20466 + 100000));
+  it('rattache toutes les dépenses à un poste', () => expect(b.horsBudget.nb).toBe(0));
+  it('calcule le réalisé du cercueil (avance de 200 000 sur 450 000)', () => {
+    const cercueil = b.lignes.find((l) => l.poste.libelle === 'Cercueil')!;
+    expect([cercueil.prevision, cercueil.realise, cercueil.engage, cercueil.resteAPayer]).toEqual([450000, 200000, 450000, 250000]);
+  });
+  it('retrouve les frais de morgue payés par Justin', () => {
+    expect(b.lignes.find((l) => l.poste.libelle === 'Frais morgue')!.realise).toBe(44500);
+  });
+});
+
+describe('Budget, cotisations et participations', () => {
+  const poste = (id: string, prevision: number) => ({ ...trace(id), libelle: id, prevision, responsable: '', financement: '', commentaire: '', ordre: 0 }) as Poste;
+  const dep = (id: string, posteId: string, montant: number, paye: number) =>
+    ({ ...depenses[0], ...trace(id), posteId, montant, montantPaye: paye, statut: statutDepense(montant, paye) }) as Depense;
+
+  it('signale un dépassement de poste', () => {
+    const b = budget([poste('tente', 100)], [dep('a', 'tente', 150, 150)]);
+    expect(b.nbDepassements).toBe(1);
+    expect(b.lignes[0].ecart).toBe(-50);
+  });
+  it('classe hors budget les dépenses d’un poste supprimé', () => {
+    const b = budget([], [dep('a', 'disparu', 80, 80)]);
+    expect(b.horsBudget).toEqual({ realise: 80, engage: 80, nb: 1 });
+    expect(b.totalRealise).toBe(80);
+  });
+  it('sépare cotisations et participations', () => {
+    const cot = { ...contributions[0], id: 'k', type: 'cotisation' as const, groupe: 'Enfants du défunt', montant: 100000, montantRecu: 40000 };
+    const s = synthese([...contributions, cot], dons, depenses);
+    expect([s.totalCotisations, s.cotisationsAttendues, s.totalParticipations, s.totalEncaisse]).toEqual([40000, 60000, 75000, 115000]);
+    const g = cotisationsParGroupe([cot], PARAMETRES_PAR_DEFAUT.groupesCotisation);
+    expect(g[0]).toMatchObject({ groupe: 'Enfants du défunt', attendu: 100000, verse: 40000 });
+    expect(g).toHaveLength(4);
+  });
+  it('considère les anciens enregistrements sans type comme des participations', () => {
+    const ancien = { ...contributions[0], type: undefined };
+    expect(synthese([ancien], [], []).totalParticipations).toBe(50000);
   });
 });

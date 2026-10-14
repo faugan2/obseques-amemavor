@@ -7,6 +7,8 @@ type SansTrace<T> = Omit<T, 'id' | 'annule' | 'creePar' | 'creeLe' | 'modifieLe'
 
 export const DEMO_CONTRIBUTIONS: SansTrace<Contribution>[] = [
   {
+    type: 'participation',
+    groupe: '',
     contributeur: 'Kodjo Exemple',
     contributeurCle: cleNom('Kodjo Exemple'),
     date: '2026-10-10',
@@ -18,6 +20,8 @@ export const DEMO_CONTRIBUTIONS: SansTrace<Contribution>[] = [
     commentaire: 'Donnée fictive de démonstration',
   },
   {
+    type: 'participation',
+    groupe: '',
     contributeur: 'Ama Exemple',
     contributeurCle: cleNom('Ama Exemple'),
     date: '2026-10-11',
@@ -49,7 +53,10 @@ export const DEMO_DEPENSES: SansTrace<Depense>[] = [
   {
     date: '2026-10-12',
     designation: 'Achat de nourriture',
+    posteId: '',
     categorie: 'Boissons et nourriture',
+    responsable: '',
+    financement: '',
     montant: 30000,
     montantPaye: 30000,
     statut: 'payee',
@@ -62,7 +69,10 @@ export const DEMO_DEPENSES: SansTrace<Depense>[] = [
   {
     date: '2026-10-13',
     designation: 'Location de chaises',
+    posteId: '',
     categorie: 'Location de chaises, bâches et matériel',
+    responsable: '',
+    financement: '',
     montant: 20000,
     montantPaye: 0,
     statut: 'prevue',

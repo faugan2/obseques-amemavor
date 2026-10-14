@@ -1,12 +1,14 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Link, Route, Routes, useParams } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { FournisseurAuth } from './lib/auth';
 import { FournisseurDonnees, useDonnees } from './lib/donnees';
 import { Chargement, FournisseurNotifications } from './composants/ui';
 import Accueil from './famille/Accueil';
-import Recu from './famille/Recu';
-import Nature from './famille/Nature';
+import Budget from './famille/Budget';
+import Cotisations from './famille/Cotisations';
+import Participations from './famille/Participations';
 import Depenses from './famille/Depenses';
+import Devis from './famille/Devis';
 import { Protection } from './admin/Gabarit';
 
 // L'administration est chargée à la demande : la famille ne télécharge que l'espace familial.
@@ -15,6 +17,10 @@ const TableauBord = lazy(() => import('./admin/TableauBord'));
 const FormContribution = lazy(() => import('./admin/FormContribution'));
 const FormDon = lazy(() => import('./admin/FormDon'));
 const FormDepense = lazy(() => import('./admin/FormDepense'));
+const FormPoste = lazy(() => import('./admin/FormPoste'));
+const FormDevis = lazy(() => import('./admin/FormDevis'));
+const ListeBudget = lazy(() => import('./admin/ListeBudget'));
+const ListeDevis = lazy(() => import('./admin/ListeDevis'));
 const Historique = lazy(() => import('./admin/Historique'));
 const Rapport = lazy(() => import('./admin/Rapport'));
 const Parametres = lazy(() => import('./admin/Parametres'));
@@ -55,18 +61,36 @@ export default function App() {
             <Suspense fallback={<Chargement />}>
               <Routes>
                 <Route path="/" element={<Accueil />} />
-                <Route path="/recu" element={<Recu />} />
-                <Route path="/nature" element={<Nature />} />
+                <Route path="/budget" element={<Budget />} />
+                <Route path="/cotisations" element={<Cotisations />} />
+                <Route path="/participations" element={<Participations />} />
                 <Route path="/depenses" element={<Depenses />} />
+                <Route path="/devis" element={<Devis />} />
+                {/* Anciennes adresses, déjà partagées éventuellement. */}
+                <Route path="/recu" element={<Navigate to="/participations" replace />} />
+                <Route path="/nature" element={<Navigate to="/participations?onglet=nature" replace />} />
 
                 <Route path="/admin/connexion" element={<Connexion />} />
-                <Route path="/admin" element={admin(<TableauBord />)} />
-                <Route path="/admin/contribution/nouvelle" element={admin(<FormContribution key="nouvelle" />)} />
+                <Route path="/admin" element={admin(<TableauBord key="tout" />)} />
+                <Route path="/admin/cotisations" element={admin(<TableauBord key="cotisation" typeFixe="cotisation" />)} />
+                <Route path="/admin/participations" element={admin(<TableauBord key="participation" typeFixe="participation" />)} />
+                <Route path="/admin/dons" element={admin(<TableauBord key="don" typeFixe="don" />)} />
+                <Route path="/admin/depenses" element={admin(<TableauBord key="depense" typeFixe="depense" />)} />
+                <Route path="/admin/budget" element={admin(<ListeBudget />)} />
+                <Route path="/admin/devis" element={admin(<ListeDevis />)} />
+
+                <Route path="/admin/cotisation/nouvelle" element={admin(<FormContribution key="cot" typeInitial="cotisation" />)} />
+                <Route path="/admin/participation/nouvelle" element={admin(<FormContribution key="par" typeInitial="participation" />)} />
+                <Route path="/admin/contribution/nouvelle" element={<Navigate to="/admin/participation/nouvelle" replace />} />
                 <Route path="/admin/contribution/:id" element={admin(<ParCle composant={FormContribution} />)} />
                 <Route path="/admin/don/nouveau" element={admin(<FormDon key="nouveau" />)} />
                 <Route path="/admin/don/:id" element={admin(<ParCle composant={FormDon} />)} />
                 <Route path="/admin/depense/nouvelle" element={admin(<FormDepense key="nouvelle" />)} />
                 <Route path="/admin/depense/:id" element={admin(<ParCle composant={FormDepense} />)} />
+                <Route path="/admin/poste/nouveau" element={admin(<FormPoste key="nouveau" />)} />
+                <Route path="/admin/poste/:id" element={admin(<ParCle composant={FormPoste} />)} />
+                <Route path="/admin/devis/nouveau" element={admin(<FormDevis key="nouveau" />)} />
+                <Route path="/admin/devis/:id" element={admin(<ParCle composant={FormDevis} />)} />
                 <Route path="/admin/historique" element={admin(<Historique />)} />
                 <Route path="/admin/rapport" element={admin(<Rapport />)} />
                 <Route path="/admin/parametres" element={admin(<Parametres />)} />

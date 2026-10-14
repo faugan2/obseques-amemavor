@@ -1,10 +1,10 @@
 // Séparation des données de démonstration et des données réelles.
 // Toutes les collections portent le préfixe « ame_ ».
-//   réel : ame_contributions, ame_dons, ame_depenses, ame_historique, ame_parametres
+//   réel : ame_contributions, ame_dons, ame_depenses, ame_postes, ame_devis, ame_historique, ame_parametres
 //   démo : ame_demo_contributions, ame_demo_dons, ...
 // Les administrateurs (ame_admins) sont communs aux deux espaces.
 
-export type NomCollection = 'contributions' | 'dons' | 'depenses' | 'historique' | 'parametres';
+export type NomCollection = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'historique' | 'parametres';
 
 export const ESPACE: 'demo' | 'reel' = import.meta.env.VITE_ESPACE === 'reel' ? 'reel' : 'demo';
 export const EST_DEMO = ESPACE === 'demo';

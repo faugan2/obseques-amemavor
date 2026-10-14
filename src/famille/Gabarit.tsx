@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Chargement, MessageErreur, classes } from '../composants/ui';
-import { IconeCadeau, IconeColombe, IconeFlecheBas, IconeFlecheHaut, IconeMaison } from '../composants/icones';
+import { IconeBudget, IconeCoeur, IconeColombe, IconeDocument, IconeFlecheBas, IconeMaison, IconePersonnes } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { dateHeure, lienTelephone } from '../lib/format';
 
 const LIENS = [
   { vers: '/', libelle: 'Accueil', icone: IconeMaison },
-  { vers: '/recu', libelle: 'Argent reçu', court: 'Reçu', icone: IconeFlecheHaut },
-  { vers: '/nature', libelle: 'Dons en nature', court: 'En nature', icone: IconeCadeau },
+  { vers: '/budget', libelle: 'Budget', icone: IconeBudget },
+  { vers: '/cotisations', libelle: 'Cotisations', court: 'Cotisat.', icone: IconePersonnes },
+  { vers: '/participations', libelle: 'Participations', court: 'Particip.', icone: IconeCoeur },
   { vers: '/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
+  { vers: '/devis', libelle: 'Devis prestataires', court: 'Devis', icone: IconeDocument },
 ];
 
 function Embleme() {
@@ -35,14 +37,14 @@ export function GabaritFamille({
   const { parametres, chargement, erreur, derniereMaj } = useDonnees();
 
   return (
-    <div className="flex min-h-screen flex-col pb-24 sm:pb-0">
+    <div className="flex min-h-screen flex-col pb-24 lg:pb-0">
       <div className="bg-foret text-white">
         <div className="conteneur flex flex-wrap items-center justify-between gap-3 py-4">
           <Link to="/" className="flex items-center gap-2.5 text-white no-underline">
             <Embleme />
             <span className="text-sm font-bold">Obsèques · {parametres.nomDefunt}</span>
           </Link>
-          <nav aria-label="Rubriques" className="hidden flex-wrap gap-1 sm:flex">
+          <nav aria-label="Rubriques" className="hidden flex-wrap gap-1 lg:flex">
             {LIENS.map((l) => (
               <NavLink
                 key={l.vers}
@@ -50,7 +52,7 @@ export function GabaritFamille({
                 end
                 className={({ isActive }) =>
                   classes(
-                    'flex min-h-[40px] items-center rounded-full px-4 text-sm no-underline transition',
+                    'flex min-h-[40px] items-center rounded-full px-3.5 text-sm no-underline transition',
                     isActive ? 'bg-white font-bold text-foret' : 'font-semibold text-[#D9E3DF] hover:bg-white/10',
                   )
                 }
@@ -89,7 +91,7 @@ export function GabaritFamille({
 
       <nav
         aria-label="Navigation"
-        className="pas-imprimer fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-2 shadow-[0_8px_30px_rgba(15,42,34,0.18)] sm:hidden"
+        className="pas-imprimer fixed inset-x-2 bottom-2 z-40 mx-auto grid max-w-[640px] grid-cols-6 gap-0.5 rounded-[20px] bg-white p-1.5 shadow-[0_8px_30px_rgba(15,42,34,0.18)] lg:hidden"
       >
         {LIENS.map((l) => (
           <NavLink
@@ -98,12 +100,12 @@ export function GabaritFamille({
             end
             className={({ isActive }) =>
               classes(
-                'flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] font-bold no-underline',
+                'flex min-h-[54px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-0.5 text-[10px] font-bold leading-none no-underline',
                 isActive ? 'bg-foret text-white' : 'text-encre-douce',
               )
             }
           >
-            <l.icone taille={20} />
+            <l.icone taille={19} />
             {l.court ?? l.libelle}
           </NavLink>
         ))}

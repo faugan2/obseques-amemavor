@@ -2,8 +2,8 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Champ, MessageErreur, Modale, useNotifier } from '../composants/ui';
-import { IconeAnnuler } from '../composants/icones';
-import { annuler, type CollectionOperation } from '../lib/operations';
+import { IconeCorbeille } from '../composants/icones';
+import { supprimer, type CollectionOperation } from '../lib/operations';
 import { montant } from '../lib/format';
 import { useDonnees } from '../lib/donnees';
 
@@ -56,8 +56,27 @@ export function MotifCorrection({ valeur, onChange, erreur }: { valeur: string; 
   );
 }
 
-/** Bouton + fenêtre d'annulation (motif obligatoire, aucune suppression). */
-export function BoutonAnnulation({ collection, id, libelle, description }: { collection: CollectionOperation; id: string; libelle: string; description: ReactNode }) {
+/**
+ * Bouton + fenêtre de suppression (motif obligatoire).
+ * L'élément disparaît des listes et des totaux ; une copie complète est gardée dans l'historique.
+ */
+export function BoutonSuppression({
+  collection,
+  id,
+  libelle,
+  donnees,
+  description,
+  avertissement,
+  retour = '/admin',
+}: {
+  collection: CollectionOperation;
+  id: string;
+  libelle: string;
+  donnees: Record<string, unknown>;
+  description: ReactNode;
+  avertissement?: ReactNode;
+  retour?: string;
+}) {
   const [ouverte, setOuverte] = useState(false);
   const [motif, setMotif] = useState('');
   const [erreur, setErreur] = useState('');
@@ -67,16 +86,16 @@ export function BoutonAnnulation({ collection, id, libelle, description }: { col
 
   const confirmer = async () => {
     if (motif.trim().length < 3) {
-      setErreur("Indiquez le motif de l'annulation (3 caractères minimum).");
+      setErreur('Indiquez le motif de la suppression (3 caractères minimum).');
       return;
     }
     setEnvoi(true);
     setErreur('');
     try {
-      await annuler(collection, id, libelle, motif);
-      notifier(`« ${libelle} » a été annulée. Elle reste visible dans l'historique.`);
+      await supprimer(collection, id, libelle, donnees, motif);
+      notifier(`« ${libelle} » a été supprimé. Une copie reste consultable dans l'historique.`);
       setOuverte(false);
-      naviguer('/admin');
+      naviguer(retour);
     } catch (e) {
       setErreur(messageEcriture(e));
     } finally {
@@ -91,24 +110,27 @@ export function BoutonAnnulation({ collection, id, libelle, description }: { col
         onClick={() => setOuverte(true)}
         className="flex min-h-[48px] items-center gap-2 rounded-[14px] border border-[#E7B9AB] bg-white px-4 text-sm font-bold text-depense-fonce hover:bg-depense-pale"
       >
-        <IconeAnnuler taille={18} />
-        Annuler cette opération
+        <IconeCorbeille taille={18} />
+        Supprimer
       </button>
-      <Modale ouverte={ouverte} onFermer={() => setOuverte(false)} titre="Annuler une opération">
+      <Modale ouverte={ouverte} onFermer={() => setOuverte(false)} titre="Supprimer">
         <div className="flex flex-col gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-depense-pale text-depense"><IconeAnnuler taille={22} /></div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-depense-pale text-depense"><IconeCorbeille taille={22} /></div>
           <div>
-            <h2 className="font-titre text-[22px] font-normal">Annuler cette opération ?</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-encre-douce">{description} Elle sera retirée des totaux mais restera visible dans l'historique. Cette action est définitive.</p>
+            <h2 className="font-titre text-[22px] font-normal">Supprimer définitivement ?</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-encre-douce">
+              {description} Il disparaîtra des listes et des totaux. Une copie complète, avec le motif, reste consultable dans l'historique.
+            </p>
+            {avertissement && <p className="mt-2 rounded-lg bg-attente-pale px-3 py-2 text-[13px] font-semibold text-attente-fonce">{avertissement}</p>}
           </div>
           {erreur && <MessageErreur>{erreur}</MessageErreur>}
-          <Champ id="motifAnnulation" libelle="Motif (obligatoire)">
-            <textarea id="motifAnnulation" rows={2} className="champ py-3" value={motif} onChange={(e) => setMotif(e.target.value)} />
+          <Champ id="motifSuppression" libelle="Motif (obligatoire)">
+            <textarea id="motifSuppression" rows={2} className="champ py-3" placeholder="ex. doublon, saisie par erreur…" value={motif} onChange={(e) => setMotif(e.target.value)} />
           </Champ>
           <div className="flex flex-wrap gap-2.5">
             <button type="button" onClick={() => setOuverte(false)} className="min-h-[48px] flex-1 rounded-xl border border-bord bg-white text-sm font-bold">Garder</button>
             <button type="button" disabled={envoi} onClick={confirmer} className="min-h-[48px] flex-1 rounded-xl bg-depense text-sm font-extrabold text-white disabled:opacity-60">
-              {envoi ? 'Annulation…' : "Annuler l'opération"}
+              {envoi ? 'Suppression…' : 'Supprimer'}
             </button>
           </div>
         </div>

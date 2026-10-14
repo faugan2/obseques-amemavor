@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GabaritAdmin } from './Gabarit';
-import { BandeauFige, BoutonAnnulation, BoutonsEnregistrer, EffetCaisse, MotifCorrection, messageEcriture } from './communs';
+import { BandeauFige, BoutonSuppression, BoutonsEnregistrer, EffetCaisse, MotifCorrection, messageEcriture } from './communs';
 import { Avatar, Champ, Chargement, MessageErreur, Segments, classes, useNotifier } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
-import { cleNom } from '../lib/calculs';
+import { cleNom, typeDe } from '../lib/calculs';
 import { creer, modifier } from '../lib/operations';
 import { erreursParChamp, schemaContribution } from '../lib/validation';
 import { aujourdHui, fcfa, lireMontant, montant } from '../lib/format';
-import { MODES_PAIEMENT, type ModePaiement } from '../types';
+import { MODES_PAIEMENT, type ModePaiement, type TypeContribution } from '../types';
 
 type Etat = 'recu' | 'promis';
 
 const VIDE = {
   etat: 'recu' as Etat,
+  type: 'participation' as TypeContribution,
+  groupe: '',
   contributeur: '',
   montant: '',
   dejaRecu: '',
@@ -24,7 +26,7 @@ const VIDE = {
   commentaire: '',
 };
 
-export default function FormContribution() {
+export default function FormContribution({ typeInitial = 'participation' }: { typeInitial?: TypeContribution }) {
   const { id } = useParams();
   const edition = Boolean(id);
   const { contributions, parametres, chargement } = useDonnees();
@@ -32,7 +34,7 @@ export default function FormContribution() {
   const naviguer = useNavigate();
   const notifier = useNotifier();
 
-  const [f, setF] = useState(VIDE);
+  const [f, setF] = useState({ ...VIDE, type: typeInitial });
   const [motifCorrection, setMotifCorrection] = useState('');
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
   const [erreurGenerale, setErreurGenerale] = useState('');
@@ -45,6 +47,8 @@ export default function FormContribution() {
     if (edition && existante && !initialise) {
       setF({
         etat: existante.montantRecu >= existante.montant ? 'recu' : 'promis',
+        type: typeDe(existante),
+        groupe: existante.groupe ?? '',
         contributeur: existante.contributeur,
         montant: String(existante.montant),
         dejaRecu: String(existante.montantRecu),
@@ -89,6 +93,8 @@ export default function FormContribution() {
     contributions.some((c) => !c.annule && c.contributeurCle === q && c.date === f.date && c.montant === mt);
 
   const fige = edition && existante && (existante.annule || parametres.cloture);
+  const cot = f.type === 'cotisation';
+  const retour = cot ? '/admin/cotisations' : '/admin/participations';
 
   if (chargement) return <GabaritAdmin titre="Contribution"><Chargement /></GabaritAdmin>;
   if (edition && !existante) return <GabaritAdmin titre="Contribution"><MessageErreur>Cette contribution est introuvable.</MessageErreur></GabaritAdmin>;
@@ -96,6 +102,8 @@ export default function FormContribution() {
   const enregistrer = async (ajouterAutre: boolean) => {
     setErreurGenerale('');
     const donnees = {
+      type: f.type,
+      groupe: f.type === 'cotisation' ? f.groupe : '',
       contributeur: f.contributeur.trim().replace(/\s+/g, ' '),
       contributeurCle: cleNom(f.contributeur),
       date: f.date,
@@ -109,24 +117,25 @@ export default function FormContribution() {
     const res = schemaContribution.safeParse(donnees);
     const errs = res.success ? {} : erreursParChamp(res.error);
     if (edition && motifCorrection.trim().length < 3) errs.motifCorrection = 'Indiquez le motif de la correction.';
+    if (f.type === 'cotisation' && !f.groupe) errs.groupe = 'Choisissez le groupe familial.';
     if (doublon && !doublonConfirme) errs.doublon = 'Confirmez qu’il ne s’agit pas d’un doublon.';
     setErreurs(errs);
     if (Object.keys(errs).length > 0 || !res.success) return;
 
     setEnvoi(true);
     try {
-      const libelle = `Contribution · ${res.data.contributeur}`;
+      const libelle = `${cot ? 'Cotisation' : 'Participation'} · ${res.data.contributeur}`;
       if (edition && existante) {
         await modifier('contributions', existante.id, existante as unknown as Record<string, unknown>, res.data, libelle, motifCorrection.trim());
         notifier('Correction enregistrée. Les totaux ont été recalculés.');
-        naviguer('/admin');
+        naviguer(retour);
       } else {
         await creer('contributions', res.data, libelle);
-        notifier(`Contribution de ${res.data.contributeur} enregistrée (${fcfa(res.data.montantRecu)} reçus).`);
+        notifier(`${cot ? 'Cotisation' : 'Participation'} de ${res.data.contributeur} enregistrée (${fcfa(res.data.montantRecu)} reçus).`);
         if (ajouterAutre) {
-          setF({ ...VIDE, date: f.date });
+          setF({ ...VIDE, type: f.type, groupe: f.groupe, date: f.date });
           setDoublonConfirme(false);
-        } else naviguer('/admin');
+        } else naviguer(retour);
       }
     } catch (e) {
       setErreurGenerale(messageEcriture(e));
@@ -142,8 +151,8 @@ export default function FormContribution() {
 
   return (
     <GabaritAdmin
-      titre={edition ? 'Modifier une contribution' : 'Nouvelle contribution'}
-      sousTitre="Argent reçu d'un membre de la famille ou d'un proche."
+      titre={`${edition ? 'Modifier une' : 'Nouvelle'} ${cot ? 'cotisation' : 'participation en argent'}`}
+      sousTitre={cot ? 'Quote-part attendue d’un membre de la famille, et ce qu’il a déjà versé.' : 'Don libre en argent d’un proche ou d’un ami de la famille.'}
     >
       {fige && <BandeauFige annulee={existante!.annule} motif={existante!.motifAnnulation} />}
       <div className="flex flex-wrap items-start gap-5">
@@ -151,19 +160,40 @@ export default function FormContribution() {
           <fieldset disabled={Boolean(fige)} className="flex flex-col gap-5">
             {erreurGenerale && <MessageErreur>{erreurGenerale}</MessageErreur>}
 
+            <Segments<TypeContribution>
+              legende="Type d'entrée"
+              valeur={f.type}
+              onChange={(v) => maj('type', v)}
+              colonnes={2}
+              options={[
+                { valeur: 'cotisation', libelle: 'Cotisation', aide: 'Quote-part de la famille', ton: 'recu' },
+                { valeur: 'participation', libelle: 'Participation', aide: 'Don libre d’un proche', ton: 'recu' },
+              ]}
+            />
+
+            {cot && (
+              <Champ id="groupe" libelle="Groupe familial" erreur={erreurs.groupe}>
+                <select id="groupe" className={classes('champ px-3', erreurs.groupe && 'champ-erreur')} value={f.groupe} onChange={(e) => maj('groupe', e.target.value)}>
+                  <option value="">Choisir…</option>
+                  {parametres.groupesCotisation.map((g) => <option key={g} value={g}>{g}</option>)}
+                  {f.groupe && !parametres.groupesCotisation.includes(f.groupe) && <option value={f.groupe}>{f.groupe}</option>}
+                </select>
+              </Champ>
+            )}
+
             <Segments<Etat>
-              legende="Cet argent est-il déjà reçu ?"
+              legende={cot ? 'La quote-part est-elle versée ?' : 'Cet argent est-il déjà reçu ?'}
               valeur={f.etat}
               onChange={(v) => maj('etat', v)}
               colonnes={2}
               options={[
-                { valeur: 'recu', libelle: 'Reçu', aide: 'Entre dans la caisse', ton: 'recu' },
-                { valeur: 'promis', libelle: 'Promis', aide: 'Suivi à part, hors caisse', ton: 'attente' },
+                { valeur: 'recu', libelle: cot ? 'Versée en totalité' : 'Reçu', aide: 'Entre dans la caisse', ton: 'recu' },
+                { valeur: 'promis', libelle: cot ? 'Pas encore, ou en partie' : 'Annoncé', aide: 'Le reste est suivi à part', ton: 'attente' },
               ]}
             />
 
             <div className="relative">
-              <Champ id="contributeur" libelle="Nom et prénom du contributeur" erreur={erreurs.contributeur} aide="Choisir un nom existant évite de compter la même personne deux fois.">
+              <Champ id="contributeur" libelle={cot ? "Nom et prénom du membre de la famille" : "Nom et prénom du participant"} erreur={erreurs.contributeur} aide="Choisir un nom existant évite de compter la même personne deux fois.">
                 <input
                   id="contributeur"
                   autoComplete="off"
@@ -202,7 +232,7 @@ export default function FormContribution() {
             </div>
 
             <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
-              <Champ id="montant" libelle={f.etat === 'recu' ? 'Montant reçu' : 'Montant promis'} erreur={erreurs.montant}>
+              <Champ id="montant" libelle={cot ? 'Quote-part (montant attendu)' : f.etat === 'recu' ? 'Montant reçu' : 'Montant annoncé'} erreur={erreurs.montant}>
                 <div className="relative">
                   <input
                     id="montant"
@@ -216,7 +246,7 @@ export default function FormContribution() {
                 </div>
               </Champ>
               {f.etat === 'promis' && (
-                <Champ id="dejaRecu" libelle="Déjà reçu sur cette promesse" erreur={erreurs.montantRecu} aide="Laisser vide si rien n'a encore été versé.">
+                <Champ id="dejaRecu" libelle={cot ? "Déjà versé" : "Déjà reçu"} erreur={erreurs.montantRecu} aide="Laisser vide si rien n'a encore été versé.">
                   <div className="relative">
                     <input
                       id="dejaRecu"
@@ -258,7 +288,7 @@ export default function FormContribution() {
               </Champ>
             </div>
             <Champ id="motif" libelle="Motif" facultatif>
-              <input id="motif" className="champ" placeholder="ex. Contribution générale, cotisation du quartier…" value={f.motif} onChange={(e) => maj('motif', e.target.value)} />
+              <input id="motif" className="champ" placeholder="ex. Participation de l’association du quartier…" value={f.motif} onChange={(e) => maj('motif', e.target.value)} />
             </Champ>
             <Champ id="commentaire" libelle="Commentaire" facultatif>
               <textarea id="commentaire" rows={2} className="champ py-3" value={f.commentaire} onChange={(e) => maj('commentaire', e.target.value)} />
@@ -281,11 +311,13 @@ export default function FormContribution() {
           </fieldset>
           {edition && existante && !fige && (
             <div className="border-t border-trait pt-4">
-              <BoutonAnnulation
+              <BoutonSuppression
                 collection="contributions"
                 id={existante.id}
-                libelle={`Contribution · ${existante.contributeur}`}
-                description={<>Contribution de « {existante.contributeur} » · {fcfa(existante.montantRecu)} reçus.</>}
+                libelle={`${cot ? 'Cotisation' : 'Participation'} · ${existante.contributeur}`}
+                donnees={existante as unknown as Record<string, unknown>}
+                retour={retour}
+                description={<>{cot ? 'La cotisation' : 'La participation'} de « {existante.contributeur} » ({fcfa(existante.montantRecu)} reçus).</>}
               />
             </div>
           )}

@@ -4,24 +4,30 @@ import { useAuth } from '../lib/auth';
 import { useDonnees } from '../lib/donnees';
 import { Chargement, MessageErreur, classes } from '../composants/ui';
 import {
+  IconeBudget,
   IconeCadeau,
   IconeCadenas,
+  IconeCoeur,
   IconeDocument,
   IconeFlecheBas,
-  IconeFlecheHaut,
   IconeHistorique,
+  IconeImprimante,
   IconeMenu,
+  IconePersonnes,
   IconeReglages,
   IconeTableau,
 } from '../composants/icones';
 
 const MENU = [
   { vers: '/admin', libelle: 'Tableau de bord', icone: IconeTableau, fin: true },
-  { vers: '/admin/contribution/nouvelle', libelle: 'Nouvelle contribution', icone: IconeFlecheHaut },
-  { vers: '/admin/don/nouveau', libelle: 'Nouveau don en nature', icone: IconeCadeau },
-  { vers: '/admin/depense/nouvelle', libelle: 'Nouvelle dépense', icone: IconeFlecheBas },
+  { vers: '/admin/budget', libelle: 'Budget', icone: IconeBudget },
+  { vers: '/admin/cotisations', libelle: 'Cotisations', icone: IconePersonnes },
+  { vers: '/admin/participations', libelle: 'Participations en argent', icone: IconeCoeur },
+  { vers: '/admin/dons', libelle: 'Participations en nature', icone: IconeCadeau },
+  { vers: '/admin/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
+  { vers: '/admin/devis', libelle: 'Devis prestataires', icone: IconeDocument },
   { vers: '/admin/historique', libelle: 'Historique', icone: IconeHistorique },
-  { vers: '/admin/rapport', libelle: 'Rapports et exports', icone: IconeDocument },
+  { vers: '/admin/rapport', libelle: 'Rapports et exports', icone: IconeImprimante },
   { vers: '/admin/parametres', libelle: 'Paramètres', icone: IconeReglages },
 ];
 

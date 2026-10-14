@@ -152,9 +152,42 @@ describe('Administrateur', () => {
     await creer(admin(), 'ame_contributions', 'c1', contribution);
     await assertSucceeds(modifier(admin(), 'ame_contributions', 'c1', { montant: 25000, montantRecu: 25000 }, 'modification', 'erreur'));
   });
-  it('ne peut pas supprimer une opération', async () => {
+  it('ne supprime pas sans copie dans l’historique', async () => {
     await creer(admin(), 'ame_contributions', 'c1', contribution);
     await assertFails(admin().collection('ame_contributions').doc('c1').delete());
+  });
+  it('supprime avec motif et copie complète dans l’historique', async () => {
+    await creer(admin(), 'ame_contributions', 'c1', contribution);
+    const sansMotif = admin().batch();
+    sansMotif.delete(admin().collection('ame_contributions').doc('c1'));
+    sansMotif.set(admin().collection('ame_historique').doc('sup_c1'), { ...hist('admin', 'contributions', 'c1', 'suppression', ''), avant: contribution });
+    await assertFails(sansMotif.commit());
+    const ok = admin().batch();
+    ok.delete(admin().collection('ame_contributions').doc('c1'));
+    ok.set(admin().collection('ame_historique').doc('sup_c1'), { ...hist('admin', 'contributions', 'c1', 'suppression', 'Doublon'), avant: contribution });
+    await assertSucceeds(ok.commit());
+  });
+  it('un non-administrateur ne peut pas supprimer', async () => {
+    await creer(admin(), 'ame_contributions', 'c1', contribution);
+    const b = intrus().batch();
+    b.delete(intrus().collection('ame_contributions').doc('c1'));
+    b.set(intrus().collection('ame_historique').doc('sup_c1'), { ...hist('intrus', 'contributions', 'c1', 'suppression', 'Doublon') });
+    await assertFails(b.commit());
+  });
+  it('enregistre une cotisation avec son groupe familial', async () => {
+    await assertSucceeds(creer(admin(), 'ame_contributions', 'k1', { ...contribution, type: 'cotisation', groupe: 'Enfants du défunt' }));
+    await assertFails(creer(admin(), 'ame_contributions', 'k2', { ...contribution, type: 'don' }));
+  });
+  it('gère les postes du budget et les devis', async () => {
+    const poste = { libelle: 'Cercueil', prevision: 450000, responsable: 'Carole', financement: 'Enveloppe Guy', commentaire: '', ordre: 10 };
+    await assertSucceeds(creer(admin(), 'ame_postes', 'poste-11', poste));
+    await assertFails(creer(admin(), 'ame_postes', 'poste-12', { ...poste, prevision: -1 }));
+    await assertSucceeds(creer(admin(), 'ame_depenses', 'd9', { ...depense, posteId: 'poste-11', categorie: 'Cercueil', responsable: 'Carole', financement: 'Enveloppe Guy' }));
+    const devis = { prestataire: 'Menuiserie', posteId: 'poste-11', objet: '', montant: 450000, date: '2026-10-14', statut: 'retenu', reference: '', commentaire: '' };
+    await assertSucceeds(creer(admin(), 'ame_devis', 'v1', devis));
+    await assertFails(creer(admin(), 'ame_devis', 'v2', { ...devis, statut: 'peut-etre' }));
+    await assertSucceeds(visiteur().collection('ame_postes').get());
+    await assertSucceeds(visiteur().collection('ame_devis').get());
   });
   it("annule seulement avec un motif, puis l'opération est figée", async () => {
     await creer(admin(), 'ame_depenses', 'd1', depense);

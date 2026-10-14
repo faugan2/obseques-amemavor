@@ -62,8 +62,10 @@ service cloud.firestore {
     }
 
     function ameContributionValide(d) {
-      return d.keys().hasOnly(['contributeur', 'contributeurCle', 'date', 'montant', 'montantRecu', 'mode',
-                               'motif', 'reference', 'commentaire'].concat(ameChampsTrace()))
+      return d.keys().hasOnly(['type', 'groupe', 'contributeur', 'contributeurCle', 'date', 'montant', 'montantRecu',
+                               'mode', 'motif', 'reference', 'commentaire'].concat(ameChampsTrace()))
+        && (!('type' in d) || d.type in ['cotisation', 'participation'])
+        && (!('groupe' in d) || ameTexte(d.groupe, 80))
         && ameTexteRequis(d.contributeur, 120)
         && ameTexteRequis(d.contributeurCle, 120)
         && ameDate(d.date)
@@ -91,9 +93,12 @@ service cloud.firestore {
     }
 
     function ameDepenseValide(d) {
-      return d.keys().hasOnly(['date', 'designation', 'categorie', 'montant', 'montantPaye', 'statut',
-                               'beneficiaire', 'mode', 'reference', 'justificatif', 'commentaire']
-                               .concat(ameChampsTrace()))
+      return d.keys().hasOnly(['date', 'designation', 'posteId', 'categorie', 'responsable', 'financement',
+                               'montant', 'montantPaye', 'statut', 'beneficiaire', 'mode', 'reference',
+                               'justificatif', 'commentaire'].concat(ameChampsTrace()))
+        && (!('posteId' in d) || ameTexte(d.posteId, 100))
+        && (!('responsable' in d) || ameTexte(d.responsable, 120))
+        && (!('financement' in d) || ameTexte(d.financement, 120))
         && ameDate(d.date)
         && ameTexteRequis(d.designation, 200)
         && ameTexteRequis(d.categorie, 80)
@@ -109,19 +114,46 @@ service cloud.firestore {
         && ameTexte(d.commentaire, 1000);
     }
 
+    function amePosteValide(d) {
+      return d.keys().hasOnly(['libelle', 'prevision', 'responsable', 'financement', 'commentaire', 'ordre']
+                               .concat(ameChampsTrace()))
+        && ameTexteRequis(d.libelle, 200)
+        && ameMontant(d.prevision)
+        && ameTexte(d.responsable, 120)
+        && ameTexte(d.financement, 120)
+        && ameTexte(d.commentaire, 1000)
+        && d.ordre is int;
+    }
+
+    function ameDevisValide(d) {
+      return d.keys().hasOnly(['prestataire', 'posteId', 'objet', 'montant', 'date', 'statut', 'reference',
+                               'commentaire'].concat(ameChampsTrace()))
+        && ameTexteRequis(d.prestataire, 200)
+        && ameTexte(d.posteId, 100)
+        && ameTexte(d.objet, 300)
+        && ameMontant(d.montant) && d.montant > 0
+        && ameDate(d.date)
+        && d.statut in ['recu', 'retenu', 'refuse']
+        && ameTexte(d.reference, 120)
+        && ameTexte(d.commentaire, 1000);
+    }
+
     function ameDonneesValides(coll, d) {
       let t = ameType(coll);
       return (t == 'contributions' && ameContributionValide(d))
         || (t == 'dons' && ameDonValide(d))
-        || (t == 'depenses' && ameDepenseValide(d));
+        || (t == 'depenses' && ameDepenseValide(d))
+        || (t == 'postes' && amePosteValide(d))
+        || (t == 'devis' && ameDevisValide(d));
     }
 
     function ameEstCollectionOperation(coll) {
-      return coll in ['ame_contributions', 'ame_dons', 'ame_depenses',
-                      'ame_demo_contributions', 'ame_demo_dons', 'ame_demo_depenses'];
+      return coll in ['ame_contributions', 'ame_dons', 'ame_depenses', 'ame_postes', 'ame_devis',
+                      'ame_demo_contributions', 'ame_demo_dons', 'ame_demo_depenses', 'ame_demo_postes',
+                      'ame_demo_devis'];
     }
 
-    // ---- Opérations : contributions, dons en nature, dépenses ----
+    // ---- Opérations : contributions, dons en nature, dépenses, postes du budget, devis ----
     match /{coll}/{id} {
       // Lecture publique (espace familial sans connexion).
       allow read: if ameEstCollectionOperation(coll);
@@ -152,8 +184,14 @@ service cloud.firestore {
                 && request.resource.data.motifAnnulation.size() >= 3))
         && ameHistoriqueLie(coll, id, ameType(coll));
 
-      // Aucune suppression définitive : on annule.
-      allow delete: if false;
+      // Suppression par l'administrateur : une copie complète doit être déposée
+      // dans l'historique (entrée « sup_<id> ») dans le même lot.
+      allow delete: if ameEstCollectionOperation(coll)
+        && ameEstAdmin()
+        && ameNonCloture(coll)
+        && existsAfter(ameCheminHist(coll, 'sup_' + id))
+        && getAfter(ameCheminHist(coll, 'sup_' + id)).data.action == 'suppression'
+        && getAfter(ameCheminHist(coll, 'sup_' + id)).data.cibleId == id;
     }
 
     // ---- Historique : ajout seul, jamais modifié ni supprimé ----
@@ -164,15 +202,20 @@ service cloud.firestore {
         && ameEstAdmin()
         && request.resource.data.keys().hasOnly(['action', 'collection', 'cibleId', 'libelle', 'avant',
                                                  'apres', 'motif', 'auteur', 'auteurEmail', 'date'])
-        && request.resource.data.action in ['creation', 'modification', 'annulation', 'parametres']
-        && request.resource.data.collection in ['contributions', 'dons', 'depenses', 'parametres']
+        && request.resource.data.action in ['creation', 'modification', 'annulation', 'suppression', 'parametres']
+        && request.resource.data.collection in ['contributions', 'dons', 'depenses', 'postes', 'devis', 'parametres']
         && request.resource.data.auteur == request.auth.uid
         && request.resource.data.date == request.time
         && ameTexte(request.resource.data.libelle, 300)
         && ameTexte(request.resource.data.motif, 1000)
-        && (request.resource.data.action != 'annulation' || request.resource.data.motif.size() >= 3)
-        // L'opération visée doit pointer vers cette entrée (même batch).
-        && getAfter(/databases/$(database)/documents/$(amePrefixe(coll) + request.resource.data.collection)/$(request.resource.data.cibleId)).data.derniereOperation == id;
+        && (!(request.resource.data.action in ['annulation', 'suppression']) || request.resource.data.motif.size() >= 3)
+        && (request.resource.data.action == 'suppression'
+            // Suppression : l'entrée s'appelle sup_<id>, l'élément existait et disparaît dans le même lot.
+            ? (id == 'sup_' + request.resource.data.cibleId
+               && exists(/databases/$(database)/documents/$(amePrefixe(coll) + request.resource.data.collection)/$(request.resource.data.cibleId))
+               && !existsAfter(/databases/$(database)/documents/$(amePrefixe(coll) + request.resource.data.collection)/$(request.resource.data.cibleId)))
+            // Sinon : l'opération visée doit pointer vers cette entrée (même lot).
+            : getAfter(/databases/$(database)/documents/$(amePrefixe(coll) + request.resource.data.collection)/$(request.resource.data.cibleId)).data.derniereOperation == id);
 
       allow update, delete: if false;
     }
@@ -188,7 +231,6 @@ service cloud.firestore {
         && request.resource.data.afficherNoms is bool
         && request.resource.data.afficherMontants is bool
         && request.resource.data.afficherJustificatifs is bool
-        && request.resource.data.categoriesDepenses is list
         && request.resource.data.categoriesDons is list
         && ameHistoriqueLie(coll, id, 'parametres');
 

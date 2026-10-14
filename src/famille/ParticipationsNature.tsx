@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { GabaritFamille } from './Gabarit';
 import { Avatar, EtatVide, Puce, classes } from '../composants/ui';
 import { IconeCategorie } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { dateLongue, montant } from '../lib/format';
 
-export default function Nature() {
+export function ParticipationsNature() {
   const { dons, parametres } = useDonnees();
   const [categorie, setCategorie] = useState('Tout');
   const actifs = dons.filter((d) => !d.annule);
@@ -14,10 +13,8 @@ export default function Nature() {
   const liste = dons.filter((d) => categorie === 'Tout' || d.categorie === categorie);
 
   return (
-    <GabaritFamille
-      titre="Dons en nature"
-      sousTitre="Les biens et services offerts par la famille et les proches. Ils sont suivis à part et ne s'additionnent pas à l'argent de la caisse."
-    >
+    <>
+      <p className="text-sm text-encre-pale">Les biens et services offerts par la famille et les proches. Ils sont suivis à part et ne s'additionnent pas à l'argent de la caisse.</p>
       <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-white p-4 shadow-flottante sm:px-5" role="group" aria-label="Filtrer par catégorie">
         <span className="mr-1.5 text-[13px] font-bold text-encre-pale">Catégorie</span>
         {categories.map((c) => {
@@ -80,6 +77,6 @@ export default function Nature() {
           ))}
         </div>
       )}
-    </GabaritFamille>
+    </>
   );
 }

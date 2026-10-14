@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GabaritAdmin } from './Gabarit';
-import { BandeauFige, BoutonAnnulation, BoutonsEnregistrer, MotifCorrection, messageEcriture } from './communs';
+import { BandeauFige, BoutonSuppression, BoutonsEnregistrer, MotifCorrection, messageEcriture } from './communs';
 import { Champ, Chargement, MessageErreur, Segments, classes, useNotifier } from '../composants/ui';
 import { IconeCategorie } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
@@ -89,12 +89,12 @@ export default function FormDon() {
       if (edition && existant) {
         await modifier('dons', existant.id, existant as unknown as Record<string, unknown>, res.data, libelle, motifCorrection.trim());
         notifier('Correction du don enregistrée.');
-        naviguer('/admin');
+        naviguer('/admin/dons');
       } else {
         await creer('dons', res.data, libelle);
         notifier(`Don enregistré : ${res.data.quantite} ${res.data.unite} de ${res.data.nature}.`);
         if (ajouterAutre) setF({ ...VIDE, donateur: f.donateur, date: f.date });
-        else naviguer('/admin');
+        else naviguer('/admin/dons');
       }
     } catch (e) {
       setErreurGenerale(messageEcriture(e));
@@ -109,7 +109,7 @@ export default function FormDon() {
   };
 
   return (
-    <GabaritAdmin titre={edition ? 'Modifier un don en nature' : 'Nouveau don en nature'} sousTitre="Un bien ou un service offert : boissons, sacs de riz, chaises, transport…">
+    <GabaritAdmin titre={edition ? 'Modifier une participation en nature' : 'Nouvelle participation en nature'} sousTitre="Un bien ou un service offert : boissons, sacs de riz, chaises, transport…">
       {fige && <BandeauFige annulee={existant!.annule} motif={existant!.motifAnnulation} />}
       <div className="flex flex-wrap items-start gap-5">
         <form onSubmit={soumettre} noValidate className="flex min-w-0 flex-[999_1_520px] flex-col gap-5 rounded-[22px] bg-white p-5 shadow-flottante sm:p-7">
@@ -185,10 +185,12 @@ export default function FormDon() {
           </fieldset>
           {edition && existant && !fige && (
             <div className="border-t border-trait pt-4">
-              <BoutonAnnulation
+              <BoutonSuppression
                 collection="dons"
                 id={existant.id}
                 libelle={`Don · ${existant.donateur}`}
+                donnees={existant as unknown as Record<string, unknown>}
+                retour="/admin/dons"
                 description={<>Don de « {existant.donateur} » : {existant.quantite} {existant.unite} de {existant.nature}.</>}
               />
             </div>

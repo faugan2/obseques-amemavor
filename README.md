@@ -2,8 +2,8 @@
 
 Application web responsive (téléphone et ordinateur) qui permet à la famille de suivre en toute transparence l'argent reçu, les dons en nature, les dépenses et le solde de la caisse.
 
-- **Espace familial** (public, sans connexion) : accueil, argent reçu, dons en nature, dépenses.
-- **Administration** (trésorier uniquement, avec connexion) : saisie, corrections, annulations, historique, rapport imprimable / PDF / Excel, paramètres, clôture.
+- **Espace familial** (public, sans connexion) : Accueil, Budget, Cotisations, Participations (en argent / en nature), Dépenses, Devis prestataires.
+- **Administration** (trésorier uniquement, avec connexion) : ajout, modification et suppression de toutes les données, historique, rapport imprimable / PDF / Excel, import des fichiers Excel, paramètres, clôture.
 
 ---
 
@@ -24,11 +24,13 @@ Toutes les collections portent le préfixe **`ame_`**. Les données de démonstr
 
 | Collection (réel) | Collection (démo) | Contenu |
 | --- | --- | --- |
-| `ame_contributions` | `ame_demo_contributions` | Contributions financières (`montant` = promis/total, `montantRecu` = réellement encaissé) |
-| `ame_dons` | `ame_demo_dons` | Dons en nature (quantité, unité, état) |
-| `ame_depenses` | `ame_demo_depenses` | Dépenses (`montant` = total, `montantPaye` = réellement versé) |
-| `ame_historique` | `ame_demo_historique` | Journal de chaque création, correction, annulation (ajout seul) |
-| `ame_parametres/general` | `ame_demo_parametres/general` | Texte d'accueil, photo, catégories, confidentialité, clôture |
+| `ame_contributions` | `ame_demo_contributions` | Entrées d'argent : `type` = `cotisation` (quote-part, avec `groupe` familial) ou `participation` (don libre). `montant` = attendu, `montantRecu` = réellement encaissé |
+| `ame_dons` | `ame_demo_dons` | Participations en nature (quantité, unité, état) |
+| `ame_postes` | `ame_demo_postes` | Postes du budget prévisionnel (prévision, responsable, financement) |
+| `ame_depenses` | `ame_demo_depenses` | Dépenses rattachées à un poste (`posteId`), avec responsable et source de financement. `montant` = total, `montantPaye` = réellement versé |
+| `ame_devis` | `ame_demo_devis` | Devis des prestataires, par poste (à étudier, retenu, non retenu) |
+| `ame_historique` | `ame_demo_historique` | Journal de chaque création, correction, suppression (ajout seul) |
+| `ame_parametres/general` | `ame_demo_parametres/general` | Texte d'accueil, photo, cérémonies, listes (groupes, financements, responsables), confidentialité, clôture |
 | `ame_admins/{uid}` | (commune) | Liste des administrateurs |
 
 Le choix de l'espace se fait par la variable `VITE_ESPACE` (`demo` ou `reel`) dans `.env.local`.
@@ -37,7 +39,9 @@ Fichiers Storage : `ame/{demo|reel}/justificatifs/...` et `ame/{demo|reel}/publi
 
 ### Règles de calcul (aucun total n'est saisi à la main)
 
-- **Total encaissé** = somme des `montantRecu` des contributions non annulées.
+- **Total encaissé** = cotisations versées + participations en argent reçues.
+- **Budget** : le réalisé de chaque poste = somme des dépenses qui lui sont rattachées (engagé = montant total, payé = montant versé). Une dépense dont le poste a été supprimé apparaît « hors budget ».
+- **Reste à financer** = budget prévu − argent reçu.
 - **Total dépensé** = somme des `montantPaye` des dépenses non annulées (un paiement partiel ne compte que pour la part payée).
 - **Solde** = total encaissé − total dépensé (un solde négatif est affiché, jamais bloqué).
 - **Reste à payer** et **promesses en attente** sont suivis à part, hors solde.
@@ -63,7 +67,7 @@ Assurée côté serveur par `firestore.rules` et `storage.rules` :
 - écriture **réservée aux administrateurs** (`ame_admins/{uid}`), qu'on ne peut créer que depuis la console ;
 - **chaque écriture doit être accompagnée de son entrée d'historique** dans le même lot, sinon elle est refusée ;
 - l'historique est en ajout seul : ni modification, ni suppression ;
-- **aucune suppression** d'opération : on annule avec un motif obligatoire, et une opération annulée est figée ;
+- **suppression** réservée à l'administrateur, avec motif obligatoire : une copie complète de l'élément supprimé est déposée dans l'historique (entrée `sup_<id>`) dans le même lot, sinon la suppression est refusée ;
 - validation stricte des champs (montants entiers positifs, statut cohérent avec le montant payé, champs inconnus refusés…) ;
 - après **clôture**, plus aucun ajout ni correction ;
 - justificatifs : images ou PDF de 10 Mo maximum, visibles par la famille seulement si l'option est activée.
@@ -104,6 +108,12 @@ Après toute modification de `.env.local`, arrêter puis relancer `npm run dev`.
 
 Avec `VITE_ESPACE=demo` : se connecter, aller dans **Paramètres** → **Charger les données fictives**. Le tableau de bord doit afficher 75 000 FCFA reçus, 30 000 payés, 45 000 en caisse, 20 000 restant à payer et 10 cartons de boissons.
 
+### Importer les fichiers Excel du DG
+
+Les fichiers remis (budget, dépenses courantes, participations, cotisations) sont convertis par `scripts/importer_excel.py` en `src/lib/donneesInitiales.json` : 51 postes (10 999 250 FCFA prévus), 21 dépenses (774 034 FCFA payés, dont 44 500 de frais de morgue réglés par Justin), 4 participations (enveloppes Papa 450 000 et Guy 300 000, Justin 44 500, Gaëlle Sepopo 100 000). Solde : 120 466 FCFA, soit le solde du fichier (20 466) plus la participation de Gaëlle Sepopo.
+
+Dans l'application : **Paramètres** → **Données des fichiers Excel** → **Importer**. L'import n'est possible que si le budget et les dépenses sont vides (pas de doublons). Les dates absentes des fichiers sont fixées au 14 octobre 2026, avec une note en commentaire. Le fichier des cotisations était un modèle vide : seuls ses groupes familiaux sont repris.
+
 ### Passer aux données réelles
 
 Mettre `VITE_ESPACE=reel` dans `.env.local`, puis reconstruire et redéployer. Les collections `ame_` (réelles) sont vides au départ, et le bouton de démonstration n'existe pas dans cet espace.
@@ -126,7 +136,7 @@ npm test             # règles de calcul (données de démonstration, paiements 
 npm run test:regles  # règles de sécurité contre l'émulateur Firebase (nécessite Java)
 ```
 
-`npm run test:regles` couvre notamment : lecture publique, écriture refusée sans connexion ou sans droits d'administration, historique obligatoire, suppression interdite, annulation avec motif, statut cohérent, clôture, isolation démo/réel et justificatifs.
+`npm run test:regles` couvre notamment : lecture publique, écriture refusée sans connexion ou sans droits d'administration, historique obligatoire, suppression avec motif et copie dans l'historique, cotisations, postes et devis, annulation avec motif, statut cohérent, clôture, isolation démo/réel et justificatifs.
 
 ## 8. Sauvegardes
 
@@ -140,9 +150,12 @@ npm run test:regles  # règles de sécurité contre l'émulateur Firebase (néce
 src/
   lib/          firebase (v8), espace (préfixes ame_), calculs, opérations (écritures + historique),
                 données temps réel, auth, validation, exports, format FCFA
-  famille/      espace familial : Accueil, Recu, Nature, Depenses
-  admin/        Connexion, TableauBord, FormContribution, FormDon, FormDepense,
+  famille/      espace familial : Accueil, Budget, Cotisations, Participations (ParticipationsArgent,
+                ParticipationsNature), Depenses, Devis
+  admin/        Connexion, TableauBord (aussi listes par type), ListeBudget, ListeDevis,
+                FormContribution, FormDon, FormDepense, FormPoste, FormDevis,
                 Historique, Rapport, Parametres
+scripts/        importer_excel.py et fichiers sources (CSV)
   composants/   icônes et éléments d'interface
 firestore.rules, storage.rules, firebase.json
 tests/regles.test.ts

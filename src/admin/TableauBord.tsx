@@ -10,12 +10,24 @@ import type { Contribution, Depense, Don } from '../types';
 
 const PAR_PAGE = 20;
 
-const LIBELLE_TYPE: Record<TypeOperation, string> = { contribution: 'Contribution', don: 'Don en nature', depense: 'Dépense' };
-const ROUTE: Record<TypeOperation, string> = { contribution: 'contribution', don: 'don', depense: 'depense' };
+const LIBELLE_TYPE: Record<TypeOperation, string> = {
+  cotisation: 'Cotisation',
+  participation: 'Participation',
+  don: 'Participation en nature',
+  depense: 'Dépense',
+};
+const ROUTE: Record<TypeOperation, string> = { cotisation: 'contribution', participation: 'contribution', don: 'don', depense: 'depense' };
+
+const PAGES: Record<TypeOperation, { titre: string; sousTitre: string; nouveau: string; vers: string; couleur: string }> = {
+  cotisation: { titre: 'Cotisations', sousTitre: 'Quotes-parts de la famille, par groupe familial.', nouveau: '+ Nouvelle cotisation', vers: '/admin/cotisation/nouvelle', couleur: 'bg-recu' },
+  participation: { titre: 'Participations en argent', sousTitre: 'Dons libres en argent des proches et amis.', nouveau: '+ Nouvelle participation', vers: '/admin/participation/nouvelle', couleur: 'bg-[#1F4E8C]' },
+  don: { titre: 'Participations en nature', sousTitre: 'Biens et services offerts (boissons, riz, chaises…).', nouveau: '+ Participation en nature', vers: '/admin/don/nouveau', couleur: 'bg-nature' },
+  depense: { titre: 'Dépenses', sousTitre: 'Chaque dépense est rattachée à un poste du budget.', nouveau: '+ Nouvelle dépense', vers: '/admin/depense/nouvelle', couleur: 'bg-depense' },
+};
 
 function Statut({ o }: { o: Operation }) {
   if (o.annule) return <Puce ton="annule">Annulée</Puce>;
-  if (o.type === 'contribution') {
+  if (o.type === 'cotisation' || o.type === 'participation') {
     const s = statutContribution(o.source as Contribution);
     return s === 'recue' ? <Puce ton="recu">Reçue</Puce> : s === 'partielle' ? <Puce ton="attente">Partielle</Puce> : <Puce ton="attente">Promise</Puce>;
   }
@@ -29,7 +41,7 @@ function Statut({ o }: { o: Operation }) {
 
 function Montant({ o }: { o: Operation }) {
   if (o.type === 'don') return <span className="text-encre-pale">—</span>;
-  if (o.type === 'contribution') {
+  if (o.type === 'cotisation' || o.type === 'participation') {
     const c = o.source as Contribution;
     return c.montantRecu > 0 ? (
       <span className="font-extrabold text-recu">+{montant(c.montantRecu)}</span>
@@ -45,18 +57,23 @@ function Montant({ o }: { o: Operation }) {
   );
 }
 
-export default function TableauBord() {
-  const { contributions, dons, depenses, synthese: s, parametres } = useDonnees();
-  const [type, setType] = useState<TypeOperation | 'tous'>('tous');
+export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) {
+  const { contributions, dons, depenses, synthese: s, budget: b, parametres } = useDonnees();
+  const [typeChoisi, setType] = useState<TypeOperation | 'tous'>('tous');
+  const type = typeFixe ?? typeChoisi;
+  const page = typeFixe ? PAGES[typeFixe] : null;
   const [categorie, setCategorie] = useState('');
   const [du, setDu] = useState('');
   const [au, setAu] = useState('');
   const [recherche, setRecherche] = useState('');
   const [annulees, setAnnulees] = useState(true);
-  const [page, setPage] = useState(0);
+  const [numPage, setPage] = useState(0);
 
   const toutes = useMemo(() => toutesOperations(contributions, dons, depenses), [contributions, dons, depenses]);
-  const categories = useMemo(() => [...new Set(toutes.map((o) => o.categorie).filter(Boolean))].sort(), [toutes]);
+  const categories = useMemo(
+    () => [...new Set(toutes.filter((o) => type === 'tous' || o.type === type).map((o) => o.categorie).filter(Boolean))].sort(),
+    [toutes, type],
+  );
 
   const filtrees = useMemo(() => {
     const q = pourRecherche(recherche);
@@ -72,7 +89,7 @@ export default function TableauBord() {
   }, [toutes, type, categorie, du, au, recherche, annulees]);
 
   const nbPages = Math.max(1, Math.ceil(filtrees.length / PAR_PAGE));
-  const pageCourante = Math.min(page, nbPages - 1);
+  const pageCourante = Math.min(numPage, nbPages - 1);
   const visibles = filtrees.slice(pageCourante * PAR_PAGE, (pageCourante + 1) * PAR_PAGE);
   const changer = <T,>(f: (v: T) => void) => (v: T) => {
     f(v);
@@ -82,46 +99,59 @@ export default function TableauBord() {
   const fermes = parametres.cloture;
 
   return (
-    <GabaritAdmin titre="Tableau de bord" sousTitre="Tous les totaux sont calculés automatiquement à partir des opérations enregistrées.">
-      {!fermes && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+    <GabaritAdmin
+      titre={page ? page.titre : 'Tableau de bord'}
+      sousTitre={page ? page.sousTitre : 'Tous les totaux sont calculés automatiquement à partir des opérations enregistrées.'}
+      actions={
+        page && !fermes ? (
+          <Link to={page.vers} className={classes('inline-flex min-h-[46px] items-center rounded-xl px-5 text-sm font-extrabold text-white no-underline', page.couleur)}>
+            {page.nouveau}
+          </Link>
+        ) : undefined
+      }
+    >
+      {!page && !fermes && (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
           {[
-            { vers: '/admin/contribution/nouvelle', t: 'Contribution', a: 'Argent reçu ou promis', c: 'bg-recu' },
-            { vers: '/admin/don/nouveau', t: 'Don en nature', a: 'Boissons, riz, chaises…', c: 'bg-nature' },
+            { vers: '/admin/cotisation/nouvelle', t: 'Cotisation', a: 'Quote-part de la famille', c: 'bg-recu' },
+            { vers: '/admin/participation/nouvelle', t: 'Participation', a: 'Don libre en argent', c: 'bg-[#1F4E8C]' },
+            { vers: '/admin/don/nouveau', t: 'En nature', a: 'Boissons, riz, chaises…', c: 'bg-nature' },
             { vers: '/admin/depense/nouvelle', t: 'Dépense', a: 'Payée, partielle ou prévue', c: 'bg-depense' },
-          ].map((b) => (
-            <Link key={b.vers} to={b.vers} className={classes('flex min-h-[84px] items-center gap-3.5 rounded-[20px] p-5 text-white no-underline transition hover:brightness-110', b.c)}>
-              <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-white/15 text-[26px]" aria-hidden="true">+</span>
+          ].map((x) => (
+            <Link key={x.vers} to={x.vers} className={classes('flex min-h-[80px] items-center gap-3.5 rounded-[20px] p-4 text-white no-underline transition hover:brightness-110', x.c)}>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-white/15 text-[26px]" aria-hidden="true">+</span>
               <span className="flex flex-col">
-                <span className="text-base font-extrabold">{b.t}</span>
-                <span className="text-[13px] opacity-90">{b.a}</span>
+                <span className="text-base font-extrabold">{x.t}</span>
+                <span className="text-[13px] opacity-90">{x.a}</span>
               </span>
             </Link>
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
-        {[
-          { l: 'Solde en caisse', v: s.solde, d: 'FCFA', c: s.solde < 0 ? 'text-depense' : 'text-recu' },
-          { l: 'Argent reçu', v: s.totalEncaisse, d: `${s.nbContributeurs} contributeur${s.nbContributeurs > 1 ? 's' : ''}`, c: '' },
-          { l: 'Dépenses payées', v: s.totalDepense, d: `${s.nbDepenses} dépense${s.nbDepenses > 1 ? 's' : ''} enregistrée${s.nbDepenses > 1 ? 's' : ''}`, c: 'text-depense' },
-          { l: 'Reste à payer', v: s.resteAPayer, d: `${s.nbDepensesNonSoldees} non soldée${s.nbDepensesNonSoldees > 1 ? 's' : ''}`, c: 'text-attente' },
-          { l: 'Promesses', v: s.promessesEnAttente, d: 'FCFA en attente', c: '' },
-          { l: 'Dons en nature', v: s.nbDons, d: 'enregistrements', c: 'text-nature', brut: true },
-        ].map((k) => (
-          <div key={k.l} className="flex flex-col gap-1 rounded-[18px] bg-white p-[18px] shadow-carte">
-            <div className="text-xs font-bold text-encre-pale">{k.l}</div>
-            <div className={classes('text-[26px] font-extrabold', k.c)}>{k.brut ? k.v : montant(k.v)}</div>
-            <div className="text-xs text-encre-pale">{k.d}</div>
-          </div>
-        ))}
-      </div>
+      {!page && (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
+          {[
+            { l: 'Solde en caisse', v: s.solde, d: 'Entrées − dépenses payées', c: s.solde < 0 ? 'text-depense' : 'text-recu' },
+            { l: 'Cotisations', v: s.totalCotisations, d: `${montant(s.cotisationsAttendues)} encore attendus`, c: 'text-recu' },
+            { l: 'Participations', v: s.totalParticipations, d: `${s.nbParticipants} participant${s.nbParticipants > 1 ? 's' : ''}`, c: 'text-[#1F4E8C]' },
+            { l: 'Dépenses payées', v: s.totalDepense, d: `${s.nbDepenses} dépense${s.nbDepenses > 1 ? 's' : ''}`, c: 'text-depense' },
+            { l: 'Reste à payer', v: s.resteAPayer, d: `${s.nbDepensesNonSoldees} non soldée${s.nbDepensesNonSoldees > 1 ? 's' : ''}`, c: 'text-attente' },
+            { l: 'Budget prévu', v: b.totalPrevision, d: `${b.lignes.length} postes · ${b.nbPostesNonChiffres} à chiffrer`, c: '' },
+          ].map((k) => (
+            <div key={k.l} className="flex flex-col gap-1 rounded-[18px] bg-white p-[18px] shadow-carte">
+              <div className="text-xs font-bold text-encre-pale">{k.l}</div>
+              <div className={classes('text-[26px] font-extrabold', k.c)}>{montant(k.v)}</div>
+              <div className="text-xs text-encre-pale">{k.d}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-start gap-5">
         <section className="carte min-w-0 flex-[999_1_560px]">
           <div className="flex flex-col gap-3 border-b border-trait p-5">
-            <h2 className="font-titre text-[22px] font-normal">Toutes les opérations</h2>
+            <h2 className="font-titre text-[22px] font-normal">{page ? `Liste (${filtrees.length})` : 'Toutes les opérations'}</h2>
             <div className="flex flex-wrap gap-2">
               <input
                 type="search"
@@ -131,12 +161,15 @@ export default function TableauBord() {
                 onChange={(e) => changer(setRecherche)(e.target.value)}
                 className="min-h-[40px] min-w-[200px] flex-1 rounded-full border border-[#D8DBD3] bg-[#F7F8F5] px-4 text-sm outline-none focus:border-recu"
               />
-              <select aria-label="Type d'opération" value={type} onChange={(e) => changer(setType)(e.target.value as TypeOperation | 'tous')} className="min-h-[40px] rounded-full border border-[#D8DBD3] bg-white px-3 text-sm">
-                <option value="tous">Tous les types</option>
-                <option value="contribution">Contributions</option>
-                <option value="don">Dons en nature</option>
-                <option value="depense">Dépenses</option>
-              </select>
+              {!typeFixe && (
+                <select aria-label="Type d'opération" value={type} onChange={(e) => changer(setType)(e.target.value as TypeOperation | 'tous')} className="min-h-[40px] rounded-full border border-[#D8DBD3] bg-white px-3 text-sm">
+                  <option value="tous">Tous les types</option>
+                  <option value="cotisation">Cotisations</option>
+                  <option value="participation">Participations en argent</option>
+                  <option value="don">Participations en nature</option>
+                  <option value="depense">Dépenses</option>
+                </select>
+              )}
               <select aria-label="Catégorie" value={categorie} onChange={(e) => changer(setCategorie)(e.target.value)} className="min-h-[40px] max-w-[220px] rounded-full border border-[#D8DBD3] bg-white px-3 text-sm">
                 <option value="">Toutes catégories</option>
                 {categories.map((c) => <option key={c} value={c}>{c}</option>)}

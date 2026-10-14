@@ -6,8 +6,10 @@ import { auth, db, firebase, storage } from './firebase';
 import { DOC_PARAMETRES, EST_DEMO, dossierJustificatifs, nomCollection } from './espace';
 import type { ActionHistorique, Contribution, Depense, Don, Justificatif, Parametres } from '../types';
 import { DEMO_CONTRIBUTIONS, DEMO_DEPENSES, DEMO_DONS } from './demo';
+import { cleNom } from './calculs';
+import initiales from './donneesInitiales.json';
 
-export type CollectionOperation = 'contributions' | 'dons' | 'depenses';
+export type CollectionOperation = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis';
 
 type Donnees = Record<string, unknown>;
 
@@ -124,6 +126,32 @@ export async function annuler(collection: CollectionOperation, id: string, libel
   await batch.commit();
 }
 
+/**
+ * Suppression définitive demandée par l'administrateur.
+ * Une copie complète de l'enregistrement est conservée dans l'historique
+ * (entrée « sup_<id> »), avec le motif : la trace n'est jamais perdue.
+ */
+export async function supprimer(
+  collection: CollectionOperation,
+  id: string,
+  libelle: string,
+  donnees: Donnees,
+  motif: string,
+): Promise<void> {
+  if (motif.trim().length < 3) throw new Error('Indiquez le motif de la suppression.');
+  const copie: Donnees = {};
+  for (const [cle, valeur] of Object.entries(donnees)) {
+    if (cle === 'id') continue;
+    copie[cle] = valeur && typeof valeur === 'object' && 'toDate' in valeur ? (valeur as { toDate: () => Date }).toDate().toISOString() : valeur;
+  }
+  const ref = db.collection(nomCollection(collection)).doc(id);
+  const refHist = db.collection(nomCollection('historique')).doc(`sup_${id}`);
+  const batch = db.batch();
+  batch.delete(ref);
+  batch.set(refHist, entreeHistorique('suppression', collection, id, libelle, copie, null, motif.trim()));
+  await batch.commit();
+}
+
 export async function enregistrerParametres(avant: Parametres, apres: Parametres, motif = ''): Promise<void> {
   const { derniereOperation: _ignore, ...propres } = apres;
   void _ignore;
@@ -168,7 +196,33 @@ export async function televerserPhoto(fichier: File): Promise<string> {
 /** Charge les données fictives — uniquement dans l'espace de démonstration. */
 export async function chargerDonneesDemo(): Promise<void> {
   if (!EST_DEMO) throw new Error("Les données de démonstration ne peuvent pas être chargées dans l'espace réel.");
-  for (const c of DEMO_CONTRIBUTIONS) await creer('contributions', c as Partial<Contribution> as Donnees, `Contribution · ${c.contributeur}`);
+  for (const c of DEMO_CONTRIBUTIONS) await creer('contributions', c as Partial<Contribution> as Donnees, `Participation · ${c.contributeur}`);
   for (const d of DEMO_DONS) await creer('dons', d as Partial<Don> as Donnees, `Don · ${d.donateur}`);
   for (const d of DEMO_DEPENSES) await creer('depenses', d as Partial<Depense> as Donnees, `Dépense · ${d.designation}`);
+}
+
+/**
+ * Importe les données des fichiers Excel remis par le DG (budget, dépenses courantes,
+ * participations). Chaque élément est créé avec son entrée d'historique, comme une saisie normale.
+ * Les postes gardent leur identifiant (poste-01…) pour que les dépenses s'y rattachent.
+ */
+export async function importerDonneesExcel(
+  dejaPresents: { postes: string[] },
+  progression: (fait: number, total: number) => void,
+): Promise<void> {
+  const total = initiales.postes.length + initiales.depenses.length + initiales.contributions.length;
+  let fait = 0;
+  const avancer = () => progression(++fait, total);
+  for (const { id, ...p } of initiales.postes) {
+    if (!dejaPresents.postes.includes(id)) await creer('postes', p, `Poste · ${p.libelle} (import Excel)`, id);
+    avancer();
+  }
+  for (const d of initiales.depenses) {
+    await creer('depenses', d as Donnees, `Dépense · ${d.designation} (import Excel)`);
+    avancer();
+  }
+  for (const c of initiales.contributions) {
+    await creer('contributions', { ...c, contributeurCle: cleNom(c.contributeur) }, `Participation · ${c.contributeur} (import Excel)`);
+    avancer();
+  }
 }
