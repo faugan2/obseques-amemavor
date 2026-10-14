@@ -43,8 +43,7 @@ function Emprunt({ e }: { e: any }) {
 }
 
 export default function Emprunts() {
-  const { donnees } = useDonnees();
-  const emprunts = donnees.emprunts || [];
+  const { emprunts } = useDonnees();
   const totalEmprunts = emprunts.reduce((s: number, e: any) => s + e.montant, 0);
   const totalRestant = emprunts.reduce((s: number, e: any) => s + (e.montant - e.montantRembourse), 0);
 
