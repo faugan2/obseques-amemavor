@@ -54,6 +54,30 @@ export const IconeImprimante = (p: P) => <Base {...p}><path d="M6 9V2h12v7M6 18H
 export const IconeTelecharger = (p: P) => <Base {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></Base>;
 export const IconePersonne = (p: P) => <Base {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></Base>;
 
+/** Colombe en vol portant un rameau d'olivier (symbole de paix). */
+export function IconeColombe({ taille = 22, ...p }: P) {
+  return (
+    <svg
+      width={taille}
+      height={taille}
+      viewBox="0 0 32 32"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...p}
+    >
+      <path d="M3.5 13.2 L6.4 12.4 C7.3 10.3 10 10.1 11.2 12.3 C13 15.4 17 16.3 21.5 15.2 L28.5 12.8 L25.6 17.2 C22.8 20.4 17.6 22.3 12.6 21.4 C8.9 20.7 6.6 17.8 6.5 14.6" />
+      <path d="M12.2 13.6 C13.2 8.4 17.4 4.8 25 3.8 C23.4 8.4 20.6 11.6 16.6 14.6" />
+      <circle cx="8.6" cy="12.6" r="0.6" fill="currentColor" stroke="none" />
+      <path d="M4.4 13.6 C3.9 15.6 3.2 17.2 2.2 18.6" />
+      <path d="M3.4 16.2 C2.1 16 1.4 16.8 1.3 17.6 C2.4 17.8 3.2 17.3 3.4 16.2Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 /** Icône associée à une catégorie de don ou de dépense. */
 export function IconeCategorie({ categorie, ...p }: P & { categorie: string }) {
   const c = categorie.toLowerCase();

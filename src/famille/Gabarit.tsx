@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { BandeauDemo, Chargement, MessageErreur, classes } from '../composants/ui';
-import { IconeCadeau, IconeFlecheBas, IconeFlecheHaut, IconeMaison } from '../composants/icones';
+import { IconeCadeau, IconeColombe, IconeFlecheBas, IconeFlecheHaut, IconeMaison } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { dateHeure, lienTelephone } from '../lib/format';
 
@@ -12,18 +12,10 @@ const LIENS = [
   { vers: '/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
 ];
 
-function Monogramme({ nom }: { nom: string }) {
-  const lettres = nom
-    .replace(/^feu\s+/i, '')
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((m) => m[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+function Embleme() {
   return (
-    <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-or font-titre text-sm text-or-clair">
-      {lettres}
+    <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-or text-or-clair">
+      <IconeColombe taille={24} />
     </div>
   );
 }
@@ -48,7 +40,7 @@ export function GabaritFamille({
       <div className="bg-foret text-white">
         <div className="conteneur flex flex-wrap items-center justify-between gap-3 py-4">
           <Link to="/" className="flex items-center gap-2.5 text-white no-underline">
-            <Monogramme nom={parametres.nomDefunt} />
+            <Embleme />
             <span className="text-sm font-bold">Obsèques · {parametres.nomDefunt}</span>
           </Link>
           <nav aria-label="Rubriques" className="hidden flex-wrap gap-1 sm:flex">
