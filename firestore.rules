@@ -1,0 +1,206 @@
+rules_version = '2';
+
+// =====================================================================
+//  Règles Firestore — Obsèques de feu AMEMAVO Komlan
+//  Ne concernent QUE les collections préfixées « ame_ ».
+//
+//  ATTENTION : le projet Firebase peut héberger d'autres applications.
+//  Un déploiement de ce fichier REMPLACE toutes les règles du projet.
+//  Si d'autres collections existent, copier le bloc « AME » ci-dessous
+//  dans les règles existantes au lieu de déployer ce fichier tel quel.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------ AME : début ------------------------------
+
+    function ameEstAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/ame_admins/$(request.auth.uid));
+    }
+
+    // « ame_demo_ » pour l'espace de démonstration, « ame_ » pour le réel.
+    function amePrefixe(coll) {
+      return coll.matches('ame_demo_.*') ? 'ame_demo_' : 'ame_';
+    }
+
+    function ameType(coll) {
+      return coll.replace('ame_demo_', '').replace('ame_', '');
+    }
+
+    function ameCheminHist(coll, id) {
+      return /databases/$(database)/documents/$(amePrefixe(coll) + 'historique')/$(id);
+    }
+
+    function ameCheminParam(coll) {
+      return /databases/$(database)/documents/$(amePrefixe(coll) + 'parametres')/general;
+    }
+
+    function ameNonCloture(coll) {
+      return !exists(ameCheminParam(coll)) || get(ameCheminParam(coll)).data.cloture != true;
+    }
+
+    // Toute écriture doit être accompagnée de son entrée d'historique (même batch).
+    function ameHistoriqueLie(coll, id, type) {
+      let h = request.resource.data.derniereOperation;
+      return h is string
+        && existsAfter(ameCheminHist(coll, h))
+        && getAfter(ameCheminHist(coll, h)).data.cibleId == id
+        && getAfter(ameCheminHist(coll, h)).data.collection == type;
+    }
+
+    // ---- Validation des champs ----
+    function ameTexte(v, max) { return v is string && v.size() <= max; }
+    function ameTexteRequis(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function ameDate(v) { return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'); }
+    function ameMontant(v) { return v is int && v >= 0 && v <= 1000000000; }
+    function ameMode(v) { return v in ['especes', 'mobile_money', 'virement', 'autre']; }
+
+    function ameChampsTrace() {
+      return ['annule', 'motifAnnulation', 'creePar', 'creeLe', 'modifieLe', 'derniereOperation'];
+    }
+
+    function ameContributionValide(d) {
+      return d.keys().hasOnly(['contributeur', 'contributeurCle', 'date', 'montant', 'montantRecu', 'mode',
+                               'motif', 'reference', 'commentaire'].concat(ameChampsTrace()))
+        && ameTexteRequis(d.contributeur, 120)
+        && ameTexteRequis(d.contributeurCle, 120)
+        && ameDate(d.date)
+        && ameMontant(d.montant) && d.montant > 0
+        && ameMontant(d.montantRecu) && d.montantRecu <= d.montant
+        && ameMode(d.mode)
+        && ameTexte(d.motif, 120)
+        && ameTexte(d.reference, 120)
+        && ameTexte(d.commentaire, 1000);
+    }
+
+    function ameDonValide(d) {
+      return d.keys().hasOnly(['donateur', 'donateurCle', 'date', 'categorie', 'nature', 'quantite', 'unite',
+                               'statut', 'valeurEstimee', 'observations'].concat(ameChampsTrace()))
+        && ameTexteRequis(d.donateur, 120)
+        && ameTexteRequis(d.donateurCle, 120)
+        && ameDate(d.date)
+        && ameTexteRequis(d.categorie, 80)
+        && ameTexteRequis(d.nature, 200)
+        && (d.quantite is int || d.quantite is float) && d.quantite > 0 && d.quantite <= 1000000
+        && ameTexteRequis(d.unite, 40)
+        && d.statut in ['annonce', 'partiel', 'recu']
+        && (d.valeurEstimee == null || ameMontant(d.valeurEstimee))
+        && ameTexte(d.observations, 1000);
+    }
+
+    function ameDepenseValide(d) {
+      return d.keys().hasOnly(['date', 'designation', 'categorie', 'montant', 'montantPaye', 'statut',
+                               'beneficiaire', 'mode', 'reference', 'justificatif', 'commentaire']
+                               .concat(ameChampsTrace()))
+        && ameDate(d.date)
+        && ameTexteRequis(d.designation, 200)
+        && ameTexteRequis(d.categorie, 80)
+        && ameMontant(d.montant) && d.montant > 0
+        && ameMontant(d.montantPaye) && d.montantPaye <= d.montant
+        && ((d.statut == 'prevue' && d.montantPaye == 0)
+            || (d.statut == 'payee' && d.montantPaye == d.montant)
+            || (d.statut == 'partielle' && d.montantPaye > 0 && d.montantPaye < d.montant))
+        && ameTexte(d.beneficiaire, 200)
+        && ameMode(d.mode)
+        && ameTexte(d.reference, 120)
+        && (d.justificatif == null || (d.justificatif is map && d.justificatif.chemin is string))
+        && ameTexte(d.commentaire, 1000);
+    }
+
+    function ameDonneesValides(coll, d) {
+      let t = ameType(coll);
+      return (t == 'contributions' && ameContributionValide(d))
+        || (t == 'dons' && ameDonValide(d))
+        || (t == 'depenses' && ameDepenseValide(d));
+    }
+
+    function ameEstCollectionOperation(coll) {
+      return coll in ['ame_contributions', 'ame_dons', 'ame_depenses',
+                      'ame_demo_contributions', 'ame_demo_dons', 'ame_demo_depenses'];
+    }
+
+    // ---- Opérations : contributions, dons en nature, dépenses ----
+    match /{coll}/{id} {
+      // Lecture publique (espace familial sans connexion).
+      allow read: if ameEstCollectionOperation(coll);
+
+      allow create: if ameEstCollectionOperation(coll)
+        && ameEstAdmin()
+        && ameNonCloture(coll)
+        && ameDonneesValides(coll, request.resource.data)
+        && request.resource.data.annule == false
+        && request.resource.data.creePar == request.auth.uid
+        && request.resource.data.creeLe == request.time
+        && request.resource.data.modifieLe == request.time
+        && ameHistoriqueLie(coll, id, ameType(coll));
+
+      // Correction ou annulation : jamais sur une opération déjà annulée,
+      // et les informations de création ne changent pas.
+      allow update: if ameEstCollectionOperation(coll)
+        && ameEstAdmin()
+        && ameNonCloture(coll)
+        && resource.data.annule == false
+        && ameDonneesValides(coll, request.resource.data)
+        && request.resource.data.creePar == resource.data.creePar
+        && request.resource.data.creeLe == resource.data.creeLe
+        && request.resource.data.modifieLe == request.time
+        && request.resource.data.derniereOperation != resource.data.derniereOperation
+        && (request.resource.data.annule == false
+            || (request.resource.data.motifAnnulation is string
+                && request.resource.data.motifAnnulation.size() >= 3))
+        && ameHistoriqueLie(coll, id, ameType(coll));
+
+      // Aucune suppression définitive : on annule.
+      allow delete: if false;
+    }
+
+    // ---- Historique : ajout seul, jamais modifié ni supprimé ----
+    match /{coll}/{id} {
+      allow read: if coll in ['ame_historique', 'ame_demo_historique'] && ameEstAdmin();
+
+      allow create: if coll in ['ame_historique', 'ame_demo_historique']
+        && ameEstAdmin()
+        && request.resource.data.keys().hasOnly(['action', 'collection', 'cibleId', 'libelle', 'avant',
+                                                 'apres', 'motif', 'auteur', 'auteurEmail', 'date'])
+        && request.resource.data.action in ['creation', 'modification', 'annulation', 'parametres']
+        && request.resource.data.collection in ['contributions', 'dons', 'depenses', 'parametres']
+        && request.resource.data.auteur == request.auth.uid
+        && request.resource.data.date == request.time
+        && ameTexte(request.resource.data.libelle, 300)
+        && ameTexte(request.resource.data.motif, 1000)
+        && (request.resource.data.action != 'annulation' || request.resource.data.motif.size() >= 3)
+        // L'opération visée doit pointer vers cette entrée (même batch).
+        && getAfter(/databases/$(database)/documents/$(amePrefixe(coll) + request.resource.data.collection)/$(request.resource.data.cibleId)).data.derniereOperation == id;
+
+      allow update, delete: if false;
+    }
+
+    // ---- Paramètres de l'espace familial ----
+    match /{coll}/{id} {
+      allow read: if coll in ['ame_parametres', 'ame_demo_parametres'];
+
+      allow create, update: if coll in ['ame_parametres', 'ame_demo_parametres']
+        && id == 'general'
+        && ameEstAdmin()
+        && request.resource.data.cloture is bool
+        && request.resource.data.afficherNoms is bool
+        && request.resource.data.afficherMontants is bool
+        && request.resource.data.afficherJustificatifs is bool
+        && request.resource.data.categoriesDepenses is list
+        && request.resource.data.categoriesDons is list
+        && ameHistoriqueLie(coll, id, 'parametres');
+
+      allow delete: if false;
+    }
+
+    // ---- Administrateurs : créés uniquement depuis la console Firebase ----
+    match /ame_admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ------------------------------- AME : fin -------------------------------
+  }
+}

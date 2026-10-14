@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// =====================================================================
+//  Règles Storage — Obsèques de feu AMEMAVO Komlan (dossier « ame/ »)
+//  Même avertissement que firestore.rules : si le projet héberge
+//  d'autres applications, copier le bloc AME dans les règles existantes.
+// =====================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ------------------------------ AME : début ------------------------------
+
+    function ameEstAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/ame_admins/$(request.auth.uid));
+    }
+
+    function ameParam(espace) {
+      return espace == 'demo' ? 'ame_demo_parametres' : 'ame_parametres';
+    }
+
+    // Reçus et factures : visibles par l'administrateur, et par la famille
+    // seulement si l'option « Montrer les justificatifs » est activée.
+    match /ame/{espace}/justificatifs/{depenseId}/{fichier} {
+      allow read: if ameEstAdmin()
+        || firestore.get(/databases/(default)/documents/$(ameParam(espace))/general).data.afficherJustificatifs == true;
+      allow create: if ameEstAdmin()
+        && espace in ['demo', 'reel']
+        && request.resource.size < 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType == 'application/pdf');
+      allow update, delete: if false;
+    }
+
+    // Photo du défunt affichée sur l'espace familial.
+    match /ame/{espace}/public/{fichier} {
+      allow read: if true;
+      allow create: if ameEstAdmin()
+        && espace in ['demo', 'reel']
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow update, delete: if false;
+    }
+
+    // ------------------------------- AME : fin -------------------------------
+  }
+}

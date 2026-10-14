@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-fond font-corps text-encre antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  input,
+  select,
+  textarea {
+    @apply text-base;
+  }
+}
+
+@layer components {
+  .champ {
+    @apply min-h-[50px] w-full rounded-xl border border-bord bg-white px-4 text-base text-encre outline-none transition focus:border-recu focus:ring-2 focus:ring-recu/20;
+  }
+  .champ-erreur {
+    @apply border-2 border-[#B3261E] focus:border-[#B3261E] focus:ring-[#B3261E]/20;
+  }
+  .etiquette {
+    @apply text-[13px] font-bold;
+  }
+  .carte {
+    @apply rounded-[20px] bg-white shadow-carte;
+  }
+  .conteneur {
+    @apply mx-auto w-full max-w-[1160px] px-4 sm:px-6;
+  }
+}
+
+@media print {
+  .pas-imprimer {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+}
