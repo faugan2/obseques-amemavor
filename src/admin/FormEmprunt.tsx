@@ -250,9 +250,11 @@ export default function FormEmprunt() {
           </fieldset>
 
           <BoutonsEnregistrer
-            enregistrer={() => enregistrer(false)}
-            ajouterAutre={!edition ? () => enregistrer(true) : undefined}
-            chargement={envoi}
+            envoi={envoi}
+            edition={edition}
+            couleur="bg-recu"
+            libelle="Enregistrer l'emprunt"
+            onAutre={() => void enregistrer(true)}
           />
         </form>
 
