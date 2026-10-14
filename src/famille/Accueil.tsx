@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { GabaritFamille } from './Gabarit';
 import { Ceremonies } from './Ceremonies';
 import { nomPublic, numerosContributeurs } from './confidentialite';
-import { Avatar, Donut, EtatVide, Puce, classes } from '../composants/ui';
-import { IconeAlerte, IconeBudget, IconeCadeau, IconeCoeur, IconeFlecheBas, IconeHorloge, IconePersonne, IconePersonnes } from '../composants/icones';
+import { Avatar, EtatVide, Puce, classes } from '../composants/ui';
+import { IconeAlerte, IconeBudget, IconeCadeau, IconeFlecheBas, IconeHorloge, IconePersonne } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { donsParCategorie, toutesOperations } from '../lib/calculs';
 import { dateLongue, montant } from '../lib/format';
@@ -79,36 +79,6 @@ export default function Accueil() {
 
   return (
     <GabaritFamille entete={<Heros />}>
-      <section className="flex flex-wrap items-center gap-7 rounded-3xl bg-white p-6 shadow-flottante sm:p-7">
-        <div className="flex min-w-[260px] flex-1 items-center gap-6">
-          <Donut part={s.partUtilisee} taille={112} />
-          <div className="flex flex-col gap-1.5">
-            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Solde en caisse</div>
-            <div className={classes('text-[40px] font-extrabold leading-none tracking-tight sm:text-[48px]', s.solde < 0 ? 'text-depense' : 'text-recu')}>
-              {montant(s.solde)} <span className="text-lg font-bold sm:text-xl">FCFA</span>
-            </div>
-            <div className="text-[13px] text-encre-pale">Cotisations + participations − dépenses payées</div>
-          </div>
-        </div>
-        <div className="grid min-w-[280px] flex-[1.4] grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
-          <Link to="/cotisations" className="flex flex-col gap-1 rounded-2xl bg-recu-pale p-4 text-recu-fonce no-underline">
-            <div className="flex items-center gap-1.5 text-xs font-bold"><IconePersonnes taille={14} strokeWidth={2.5} />Cotisations</div>
-            <div className="text-2xl font-extrabold">{montant(s.totalCotisations)}</div>
-            <div className="text-xs">{s.nbCotisants} cotisant{s.nbCotisants > 1 ? 's' : ''}</div>
-          </Link>
-          <Link to="/participations" className="flex flex-col gap-1 rounded-2xl bg-[#E6EEF8] p-4 text-[#1F4E8C] no-underline">
-            <div className="flex items-center gap-1.5 text-xs font-bold"><IconeCoeur taille={14} strokeWidth={2.5} />Participations</div>
-            <div className="text-2xl font-extrabold">{montant(s.totalParticipations)}</div>
-            <div className="text-xs">{s.nbParticipants} participant{s.nbParticipants > 1 ? 's' : ''}</div>
-          </Link>
-          <Link to="/depenses" className="flex flex-col gap-1 rounded-2xl bg-depense-pale p-4 text-depense-fonce no-underline">
-            <div className="flex items-center gap-1.5 text-xs font-bold"><IconeFlecheBas taille={14} strokeWidth={2.5} />Dépenses payées</div>
-            <div className="text-2xl font-extrabold">{montant(s.totalDepense)}</div>
-            <div className="text-xs">{s.nbDepenses} dépense{s.nbDepenses > 1 ? 's' : ''}</div>
-          </Link>
-        </div>
-      </section>
-
       {b.lignes.length > 0 && (
         <Link to="/budget" className="carte flex flex-col gap-3 p-5 text-encre no-underline sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
