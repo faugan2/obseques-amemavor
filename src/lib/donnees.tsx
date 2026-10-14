@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { db } from './firebase';
 import { DOC_PARAMETRES, nomCollection } from './espace';
 import { budget, derniereMiseAJour, synthese, type Budget, type Synthese } from './calculs';
-import { PARAMETRES_PAR_DEFAUT, type Contribution, type Depense, type Devis, type Don, type Parametres, type Poste } from '../types';
+import { PARAMETRES_PAR_DEFAUT, type Contribution, type Depense, type Devis, type Don, type Emprunt, type Parametres, type Poste } from '../types';
 
 interface EtatDonnees {
   contributions: Contribution[];
@@ -12,6 +12,7 @@ interface EtatDonnees {
   depenses: Depense[];
   postes: Poste[];
   devis: Devis[];
+  emprunts: Emprunt[];
   parametres: Parametres;
   parametresExistent: boolean;
   synthese: Synthese;
@@ -36,6 +37,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   const [depenses, setDepenses] = useState<Depense[]>([]);
   const [postes, setPostes] = useState<Poste[]>([]);
   const [devis, setDevis] = useState<Devis[]>([]);
+  const [emprunts, setEmprunts] = useState<Emprunt[]>([]);
   const [parametres, setParametres] = useState<Parametres>(PARAMETRES_PAR_DEFAUT);
   const [parametresExistent, setParametresExistent] = useState(false);
   const [charges, setCharges] = useState(0);
@@ -69,6 +71,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       ecouter<Depense>('depenses', setDepenses),
       ecouter<Poste>('postes', setPostes),
       ecouter<Devis>('devis', setDevis),
+      ecouter<Emprunt>('emprunts', setEmprunts),
     ];
 
     let premierParam = true;
@@ -96,15 +99,16 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       depenses,
       postes,
       devis,
+      emprunts,
       parametres,
       parametresExistent,
-      synthese: synthese(contributions, dons, depenses),
+      synthese: synthese(contributions, dons, depenses, emprunts),
       budget: budget(postes, depenses, devis),
-      derniereMaj: derniereMiseAJour([contributions, dons, depenses, postes, devis]),
-      chargement: charges < 6,
+      derniereMaj: derniereMiseAJour([contributions, dons, depenses, postes, devis, emprunts]),
+      chargement: charges < 7,
       erreur,
     }),
-    [contributions, dons, depenses, postes, devis, parametres, parametresExistent, charges, erreur],
+    [contributions, dons, depenses, postes, devis, emprunts, parametres, parametresExistent, charges, erreur],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

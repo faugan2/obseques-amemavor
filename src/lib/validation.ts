@@ -82,6 +82,23 @@ export const schemaDevis = z.object({
   commentaire: texte(1000),
 });
 
+export const schemaEmprunt = z
+  .object({
+    preteur: requis(120, 'Indiquez le nom du prêteur.'),
+    montant: entier('Saisissez le montant emprunté en FCFA (nombre entier).').refine((v) => v > 0, 'Le montant doit être supérieur à zéro.'),
+    date,
+    dateRemboursement: date.optional(),
+    montantRembourse: entier('Saisissez le montant remboursé en FCFA (nombre entier).'),
+    statut: z.enum(['annonce', 'partielle', 'rembourse']),
+    mode,
+    reference: texte(120),
+    commentaire: texte(1000),
+  })
+  .refine((e) => e.montantRembourse <= e.montant, {
+    path: ['montantRembourse'],
+    message: 'Le montant remboursé ne peut pas dépasser le montant emprunté.',
+  });
+
 /** Transforme les erreurs zod en { champ: message }. */
 export function erreursParChamp(e: z.ZodError): Record<string, string> {
   const r: Record<string, string> = {};

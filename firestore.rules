@@ -138,19 +138,34 @@ service cloud.firestore {
         && ameTexte(d.commentaire, 1000);
     }
 
+    function ameEmpruntValide(d) {
+      return d.keys().hasOnly(['preteur', 'montant', 'date', 'dateRemboursement', 'montantRembourse', 'statut',
+                               'mode', 'reference', 'commentaire'].concat(ameChampsTrace()))
+        && ameTexteRequis(d.preteur, 120)
+        && ameMontant(d.montant) && d.montant > 0
+        && ameDate(d.date)
+        && (!('dateRemboursement' in d) || ameDate(d.dateRemboursement))
+        && ameMontant(d.montantRembourse) && d.montantRembourse <= d.montant
+        && d.statut in ['annonce', 'partielle', 'rembourse']
+        && ameMode(d.mode)
+        && ameTexte(d.reference, 120)
+        && ameTexte(d.commentaire, 1000);
+    }
+
     function ameDonneesValides(coll, d) {
       let t = ameType(coll);
       return (t == 'contributions' && ameContributionValide(d))
         || (t == 'dons' && ameDonValide(d))
         || (t == 'depenses' && ameDepenseValide(d))
         || (t == 'postes' && amePosteValide(d))
-        || (t == 'devis' && ameDevisValide(d));
+        || (t == 'devis' && ameDevisValide(d))
+        || (t == 'emprunts' && ameEmpruntValide(d));
     }
 
     function ameEstCollectionOperation(coll) {
-      return coll in ['ame_contributions', 'ame_dons', 'ame_depenses', 'ame_postes', 'ame_devis',
+      return coll in ['ame_contributions', 'ame_dons', 'ame_depenses', 'ame_postes', 'ame_devis', 'ame_emprunts',
                       'ame_demo_contributions', 'ame_demo_dons', 'ame_demo_depenses', 'ame_demo_postes',
-                      'ame_demo_devis'];
+                      'ame_demo_devis', 'ame_demo_emprunts'];
     }
 
     // ---- Opérations : contributions, dons en nature, dépenses, postes du budget, devis ----
@@ -203,7 +218,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['action', 'collection', 'cibleId', 'libelle', 'avant',
                                                  'apres', 'motif', 'auteur', 'auteurEmail', 'date'])
         && request.resource.data.action in ['creation', 'modification', 'annulation', 'suppression', 'parametres']
-        && request.resource.data.collection in ['contributions', 'dons', 'depenses', 'postes', 'devis', 'parametres']
+        && request.resource.data.collection in ['contributions', 'dons', 'depenses', 'postes', 'devis', 'emprunts', 'parametres']
         && request.resource.data.auteur == request.auth.uid
         && request.resource.data.date == request.time
         && ameTexte(request.resource.data.libelle, 300)

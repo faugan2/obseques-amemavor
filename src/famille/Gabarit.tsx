@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Chargement, MessageErreur, classes } from '../composants/ui';
-import { IconeBudget, IconeCoeur, IconeColombe, IconeDocument, IconeFlecheBas, IconeMaison, IconePersonnes } from '../composants/icones';
+import { IconeBudget, IconeCoeur, IconeColombe, IconeDocument, IconeFlecheBas, IconeMaison, IconePersonnes, IconePièce } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { dateHeure, lienTelephone } from '../lib/format';
 
@@ -10,6 +10,7 @@ const LIENS = [
   { vers: '/budget', libelle: 'Budget', icone: IconeBudget },
   { vers: '/cotisations', libelle: 'Cotisations', court: 'Cotisat.', icone: IconePersonnes },
   { vers: '/participations', libelle: 'Participations', court: 'Particip.', icone: IconeCoeur },
+  { vers: '/emprunts', libelle: 'Emprunts', icone: IconePièce },
   { vers: '/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
   { vers: '/devis', libelle: 'Devis prestataires', court: 'Devis', icone: IconeDocument },
 ];
@@ -91,7 +92,7 @@ export function GabaritFamille({
 
       <nav
         aria-label="Navigation"
-        className="pas-imprimer fixed inset-x-2 bottom-2 z-40 mx-auto grid max-w-[640px] grid-cols-6 gap-0.5 rounded-[20px] bg-white p-1.5 shadow-[0_8px_30px_rgba(15,42,34,0.18)] lg:hidden"
+        className="pas-imprimer fixed inset-x-2 bottom-2 z-40 mx-auto grid max-w-[640px] grid-cols-7 gap-0.5 rounded-[20px] bg-white p-1.5 shadow-[0_8px_30px_rgba(15,42,34,0.18)] lg:hidden"
       >
         {LIENS.map((l) => (
           <NavLink

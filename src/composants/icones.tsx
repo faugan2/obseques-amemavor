@@ -55,6 +55,7 @@ export const IconeTelecharger = (p: P) => <Base {...p}><path d="M21 15v4a2 2 0 0
 export const IconeBudget = (p: P) => <Base {...p}><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" rx="0.5" /><rect x="12" y="8" width="3" height="10" rx="0.5" /><rect x="17" y="5" width="3" height="13" rx="0.5" /></Base>;
 export const IconeCorbeille = (p: P) => <Base {...p}><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" /></Base>;
 export const IconePersonne = (p: P) => <Base {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></Base>;
+export const IconePièce = (p: P) => <Base {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 11c0-1.66 2.24-3 5-3s5 1.34 5 3M7 13c0 1.66 2.24 3 5 3s5-1.34 5-3" /></Base>;
 
 /** Colombe en vol portant un rameau d'olivier (symbole de paix). */
 export function IconeColombe({ taille = 22, ...p }: P) {

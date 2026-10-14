@@ -7,6 +7,7 @@ import Accueil from './famille/Accueil';
 import Budget from './famille/Budget';
 import Cotisations from './famille/Cotisations';
 import Participations from './famille/Participations';
+import Emprunts from './famille/Emprunts';
 import Depenses from './famille/Depenses';
 import Devis from './famille/Devis';
 import { Protection } from './admin/Gabarit';
@@ -19,8 +20,10 @@ const FormDon = lazy(() => import('./admin/FormDon'));
 const FormDepense = lazy(() => import('./admin/FormDepense'));
 const FormPoste = lazy(() => import('./admin/FormPoste'));
 const FormDevis = lazy(() => import('./admin/FormDevis'));
+const FormEmprunt = lazy(() => import('./admin/FormEmprunt'));
 const ListeBudget = lazy(() => import('./admin/ListeBudget'));
 const ListeDevis = lazy(() => import('./admin/ListeDevis'));
+const PageEmprunts = lazy(() => import('./admin/Emprunts'));
 const Historique = lazy(() => import('./admin/Historique'));
 const Rapport = lazy(() => import('./admin/Rapport'));
 const Parametres = lazy(() => import('./admin/Parametres'));
@@ -64,6 +67,7 @@ export default function App() {
                 <Route path="/budget" element={<Budget />} />
                 <Route path="/cotisations" element={<Cotisations />} />
                 <Route path="/participations" element={<Participations />} />
+                <Route path="/emprunts" element={<Emprunts />} />
                 <Route path="/depenses" element={<Depenses />} />
                 <Route path="/devis" element={<Devis />} />
                 {/* Anciennes adresses, déjà partagées éventuellement. */}
@@ -75,6 +79,7 @@ export default function App() {
                 <Route path="/admin/cotisations" element={admin(<TableauBord key="cotisation" typeFixe="cotisation" />)} />
                 <Route path="/admin/participations" element={admin(<TableauBord key="participation" typeFixe="participation" />)} />
                 <Route path="/admin/dons" element={admin(<TableauBord key="don" typeFixe="don" />)} />
+                <Route path="/admin/emprunts" element={admin(<PageEmprunts />)} />
                 <Route path="/admin/depenses" element={admin(<TableauBord key="depense" typeFixe="depense" />)} />
                 <Route path="/admin/budget" element={admin(<ListeBudget />)} />
                 <Route path="/admin/devis" element={admin(<ListeDevis />)} />
@@ -91,6 +96,8 @@ export default function App() {
                 <Route path="/admin/poste/:id" element={admin(<ParCle composant={FormPoste} />)} />
                 <Route path="/admin/devis/nouveau" element={admin(<FormDevis key="nouveau" />)} />
                 <Route path="/admin/devis/:id" element={admin(<ParCle composant={FormDevis} />)} />
+                <Route path="/admin/emprunt/nouveau" element={admin(<FormEmprunt key="nouveau" />)} />
+                <Route path="/admin/emprunt/:id" element={admin(<ParCle composant={FormEmprunt} />)} />
                 <Route path="/admin/historique" element={admin(<Historique />)} />
                 <Route path="/admin/rapport" element={admin(<Rapport />)} />
                 <Route path="/admin/parametres" element={admin(<Parametres />)} />

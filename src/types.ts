@@ -135,6 +135,31 @@ export interface Devis extends Trace {
   commentaire: string;
 }
 
+export type StatutEmprunt = 'annonce' | 'partielle' | 'rembourse';
+
+export const STATUTS_EMPRUNT: { valeur: StatutEmprunt; libelle: string }[] = [
+  { valeur: 'annonce', libelle: 'Annoncé' },
+  { valeur: 'partielle', libelle: 'Partiellement remboursé' },
+  { valeur: 'rembourse', libelle: 'Remboursé' },
+];
+
+/**
+ * Emprunt accordé à la famille.
+ * montant             = somme empruntée (entrée de caisse)
+ * montantRembourse    = somme déjà remboursée (sortie de caisse)
+ */
+export interface Emprunt extends Trace {
+  preteur: string; // Nom de la personne qui prête
+  montant: number; // Montant emprunté
+  date: string; // Date du prêt (AAAA-MM-JJ)
+  dateRemboursement?: string; // Date prévue de remboursement
+  montantRembourse: number; // Montant déjà remboursé
+  statut: StatutEmprunt; // État du remboursement
+  mode: ModePaiement;
+  reference: string;
+  commentaire: string;
+}
+
 /** Une cérémonie du programme des obsèques (affichée jusqu'à sa date incluse). */
 export interface Ceremonie {
   date: string; // AAAA-MM-JJ

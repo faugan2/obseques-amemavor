@@ -14,6 +14,7 @@ import {
   IconeImprimante,
   IconeMenu,
   IconePersonnes,
+  IconePièce,
   IconeReglages,
   IconeTableau,
 } from '../composants/icones';
@@ -24,6 +25,7 @@ const MENU = [
   { vers: '/admin/cotisations', libelle: 'Cotisations', icone: IconePersonnes },
   { vers: '/admin/participations', libelle: 'Participations en argent', icone: IconeCoeur },
   { vers: '/admin/dons', libelle: 'Participations en nature', icone: IconeCadeau },
+  { vers: '/admin/emprunts', libelle: 'Emprunts', icone: IconePièce },
   { vers: '/admin/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
   { vers: '/admin/devis', libelle: 'Devis prestataires', icone: IconeDocument },
   { vers: '/admin/historique', libelle: 'Historique', icone: IconeHistorique },

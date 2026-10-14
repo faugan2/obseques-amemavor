@@ -1,5 +1,5 @@
 // Règles de calcul. Fonctions pures : aucun total n'est jamais saisi à la main.
-import type { Contribution, Depense, Devis, Don, Poste, StatutDepense, TypeContribution } from '../types';
+import type { Contribution, Depense, Devis, Don, Emprunt, Poste, StatutDepense, TypeContribution } from '../types';
 
 /** Normalise un nom pour reconnaître la même personne malgré la casse, les accents ou l'ordre des mots. */
 export function cleNom(nom: string): string {
@@ -48,7 +48,11 @@ export interface Synthese {
   /** Participations annoncées mais pas encore reçues. */
   promessesEnAttente: number;
   nbPromesses: number;
-  /** Cotisations + participations reçues. */
+  /** Emprunts reçus. */
+  totalEmprunts: number;
+  /** Montant des emprunts déjà remboursés. */
+  totalEmpruntsRembourses: number;
+  /** Cotisations + participations + emprunts reçus. */
   totalEncaisse: number;
   totalDepense: number;
   resteAPayer: number;
@@ -59,18 +63,22 @@ export interface Synthese {
   nbContributions: number;
   nbDons: number;
   nbDepenses: number;
+  nbEmprunts: number;
   partUtilisee: number; // 0..1
 }
 
-export function synthese(contributions: Contribution[], dons: Don[], depenses: Depense[]): Synthese {
+export function synthese(contributions: Contribution[], dons: Don[], depenses: Depense[], emprunts: Emprunt[] = []): Synthese {
   const c = actives(contributions);
   const cot = c.filter((x) => typeDe(x) === 'cotisation');
   const par = c.filter((x) => typeDe(x) === 'participation');
   const d = actives(depenses);
+  const e = actives(emprunts);
 
   const totalCotisations = somme(cot, (x) => x.montantRecu);
   const totalParticipations = somme(par, (x) => x.montantRecu);
-  const totalEncaisse = totalCotisations + totalParticipations;
+  const totalEmprunts = somme(e, (x) => x.montant);
+  const totalEmpruntsRembourses = somme(e, (x) => x.montantRembourse);
+  const totalEncaisse = totalCotisations + totalParticipations + totalEmprunts;
   const totalDepense = somme(d, (x) => x.montantPaye);
 
   const distincts = (l: Contribution[]) => new Set(l.filter((x) => x.montantRecu > 0).map((x) => x.contributeurCle || cleNom(x.contributeur))).size;
@@ -82,16 +90,19 @@ export function synthese(contributions: Contribution[], dons: Don[], depenses: D
     totalParticipations,
     promessesEnAttente: somme(par, (x) => Math.max(0, x.montant - x.montantRecu)),
     nbPromesses: par.filter((x) => x.montant > x.montantRecu).length,
+    totalEmprunts,
+    totalEmpruntsRembourses,
     totalEncaisse,
     totalDepense,
     resteAPayer: somme(d, (x) => Math.max(0, x.montant - x.montantPaye)),
     nbDepensesNonSoldees: d.filter((x) => x.montant > x.montantPaye).length,
-    solde: totalEncaisse - totalDepense,
+    solde: totalEncaisse - totalDepense - totalEmpruntsRembourses,
     nbContributeurs: distincts(c),
     nbParticipants: distincts(par),
     nbContributions: c.length,
     nbDons: actives(dons).length,
     nbDepenses: d.length,
+    nbEmprunts: e.length,
     partUtilisee: totalEncaisse > 0 ? Math.min(1, totalDepense / totalEncaisse) : 0,
   };
 }
