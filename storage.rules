@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // =====================================================================
-//  Règles Storage — Obsèques de feu AMEMAVO Komlan (dossier « ame/ »)
+//  Règles Storage — Obsèques de feu Eli Komlan AMEMAVOR (dossier « ame/ »)
 //  Même avertissement que firestore.rules : si le projet héberge
 //  d'autres applications, copier le bloc AME dans les règles existantes.
 // =====================================================================

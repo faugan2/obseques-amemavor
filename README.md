@@ -1,4 +1,4 @@
-# Suivi des contributions et dépenses — Obsèques de feu AMEMAVO Komlan
+# Suivi des contributions et dépenses — Obsèques de feu Eli Komlan AMEMAVOR
 
 Application web responsive (téléphone et ordinateur) qui permet à la famille de suivre en toute transparence l'argent reçu, les dons en nature, les dépenses et le solde de la caisse.
 
@@ -108,11 +108,11 @@ Mettre `VITE_ESPACE=reel` dans `.env.local`, puis reconstruire et redéployer. L
 ```bash
 npm install -g firebase-tools   # ou npx firebase
 firebase login
-firebase hosting:sites:create ame-obseques-amemavo   # une seule fois
+firebase hosting:sites:create ame-obseques-amemavor   # une seule fois
 npm run deploy                                       # construit puis publie
 ```
 
-Le site est publié sur `https://ame-obseques-amemavo.web.app` (HTTPS automatique). On utilise un **site d'hébergement séparé** pour ne pas écraser un autre site du projet `my-streakers`. Si le nom est déjà pris, en choisir un autre et le reporter dans `firebase.json` (`hosting.site`).
+Le site est publié sur `https://ame-obseques-amemavor.web.app` (HTTPS automatique). On utilise un **site d'hébergement séparé** pour ne pas écraser un autre site du projet `my-streakers`. Si le nom est déjà pris, en choisir un autre et le reporter dans `firebase.json` (`hosting.site`).
 
 ## 7. Tests
 

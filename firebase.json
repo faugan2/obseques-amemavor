@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "ame-obseques-amemavo",
+    "site": "ame-obseques-amemavor",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [{ "source": "**", "destination": "/index.html" }],

@@ -1,7 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Link, Route, Routes, useParams } from 'react-router-dom';
 import { FournisseurAuth } from './lib/auth';
-import { FournisseurDonnees } from './lib/donnees';
+import { FournisseurDonnees, useDonnees } from './lib/donnees';
 import { Chargement, FournisseurNotifications } from './composants/ui';
 import Accueil from './famille/Accueil';
 import Recu from './famille/Recu';
@@ -30,6 +30,15 @@ function Introuvable() {
 
 const admin = (el: React.ReactNode) => <Protection>{el}</Protection>;
 
+/** Titre de l'onglet du navigateur, suit le nom défini dans les Paramètres. */
+function TitreDocument() {
+  const { parametres } = useDonnees();
+  useEffect(() => {
+    document.title = `Obsèques de ${parametres.nomDefunt.replace(/^Feu /i, 'feu ')} · Suivi des contributions et dépenses`;
+  }, [parametres.nomDefunt]);
+  return null;
+}
+
 /** Remonte le formulaire quand on passe d'une opération à une autre. */
 function ParCle({ composant: C }: { composant: React.ComponentType }) {
   const { id } = useParams();
@@ -41,6 +50,7 @@ export default function App() {
     <BrowserRouter>
       <FournisseurNotifications>
         <FournisseurDonnees>
+          <TitreDocument />
           <FournisseurAuth>
             <Suspense fallback={<Chargement />}>
               <Routes>
