@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Link, NavLink, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useDonnees } from '../lib/donnees';
-import { BandeauDemo, Chargement, MessageErreur, classes } from '../composants/ui';
+import { Chargement, MessageErreur, classes } from '../composants/ui';
 import {
   IconeCadeau,
   IconeCadenas,
@@ -94,7 +94,6 @@ export function GabaritAdmin({ titre, sousTitre, actions, children }: { titre: s
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2.5">
                 <h1 className="font-titre text-[30px] font-normal leading-tight sm:text-[34px]">{titre}</h1>
-                <BandeauDemo compact />
               </div>
               {sousTitre && <div className="text-sm text-encre-pale">{sousTitre}</div>}
             </div>

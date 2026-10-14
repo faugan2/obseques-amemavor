@@ -1,21 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { EST_DEMO } from '../lib/espace';
 import { initiales } from '../lib/format';
 import { IconeAlerte, IconeCoche, IconeCroix } from './icones';
 
 export function classes(...c: (string | false | null | undefined)[]): string {
   return c.filter(Boolean).join(' ');
-}
-
-export function BandeauDemo({ compact = false }: { compact?: boolean }) {
-  if (!EST_DEMO) return null;
-  return compact ? (
-    <span className="rounded-md bg-or px-2 py-1 text-[11px] font-extrabold tracking-wide text-[#2A1F05]">DÉMO</span>
-  ) : (
-    <div className="pas-imprimer bg-or px-4 py-[7px] text-center text-[11px] font-extrabold tracking-[0.08em] text-[#2A1F05]">
-      DÉMONSTRATION · DONNÉES FICTIVES
-    </div>
-  );
 }
 
 const TEINTES = ['bg-recu text-white', 'bg-foret text-or-clair', 'bg-nature text-white', 'bg-[#1F4E8C] text-white', 'bg-depense text-white'];
