@@ -77,8 +77,21 @@ export default function FormLibelle() {
         notifier('Libellé modifié.');
         naviguer('/admin/libelles');
       } else {
+        // Créer le libellé
         await creer('libelles', res.data, libelle);
-        notifier(`Libellé « ${res.data.nom} » créé.`);
+
+        // Créer automatiquement un poste correspondant
+        const posteData = {
+          libelle: res.data.nom,
+          prevision: 0,
+          responsable: '',
+          financement: '',
+          commentaire: `Créé automatiquement pour le libellé "${res.data.nom}"`,
+          ordre: res.data.ordre,
+        };
+        await creer('postes', posteData, `Poste · ${res.data.nom}`);
+
+        notifier(`✅ Libellé « ${res.data.nom} » créé + Poste ajouté au budget`);
         if (ajouterAutre) {
           setF({ ...VIDE, ordre: String(ordreVal + 10) });
         } else naviguer('/admin/libelles');
