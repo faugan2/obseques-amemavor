@@ -57,7 +57,6 @@ function Carte({ d, montrerJustif }: { d: Depense; montrerJustif: boolean }) {
 export default function Depenses() {
   const { depenses, synthese: s, parametres } = useDonnees();
   const payees = depenses.filter((d) => d.montantPaye > 0 && (d.statut === 'payee' || d.annule));
-  const aPayer = depenses.filter((d) => !d.annule && d.statut !== 'payee');
   const engage = s.totalDepense + s.resteAPayer;
   const pctPaye = engage ? Math.round((s.totalDepense / engage) * 100) : 0;
 
@@ -81,15 +80,6 @@ export default function Depenses() {
         </div>
       </section>
 
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-titre text-2xl font-normal">À payer</h2>
-        {aPayer.length === 0 ? (
-          <p className="text-sm text-encre-pale">Aucune dépense en attente de paiement.</p>
-        ) : (
-          aPayer.map((d) => <Carte key={d.id} d={d} montrerJustif={parametres.afficherJustificatifs} />)
-        )}
-      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-titre text-2xl font-normal">Payées</h2>
