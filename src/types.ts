@@ -160,6 +160,13 @@ export interface Emprunt extends Trace {
   commentaire: string;
 }
 
+/** Libellé centralisé utilisé par postes et dépenses. */
+export interface Libelle extends Trace {
+  nom: string; // Nom unique du libellé
+  description: string; // Description détaillée
+  ordre: number; // Ordre d'affichage
+}
+
 /** Une cérémonie du programme des obsèques (affichée jusqu'à sa date incluse). */
 export interface Ceremonie {
   date: string; // AAAA-MM-JJ

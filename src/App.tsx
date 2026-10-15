@@ -21,9 +21,11 @@ const FormDepense = lazy(() => import('./admin/FormDepense'));
 const FormPoste = lazy(() => import('./admin/FormPoste'));
 const FormDevis = lazy(() => import('./admin/FormDevis'));
 const FormEmprunt = lazy(() => import('./admin/FormEmprunt'));
+const FormLibelle = lazy(() => import('./admin/FormLibelle'));
 const ListeBudget = lazy(() => import('./admin/ListeBudget'));
 const ListeDevis = lazy(() => import('./admin/ListeDevis'));
 const PageEmprunts = lazy(() => import('./admin/Emprunts'));
+const PageLibelles = lazy(() => import('./admin/Libelles'));
 const Historique = lazy(() => import('./admin/Historique'));
 const Rapport = lazy(() => import('./admin/Rapport'));
 const Parametres = lazy(() => import('./admin/Parametres'));
@@ -98,6 +100,9 @@ export default function App() {
                 <Route path="/admin/devis/:id" element={admin(<ParCle composant={FormDevis} />)} />
                 <Route path="/admin/emprunt/nouveau" element={admin(<FormEmprunt key="nouveau" />)} />
                 <Route path="/admin/emprunt/:id" element={admin(<ParCle composant={FormEmprunt} />)} />
+                <Route path="/admin/libelles" element={admin(<PageLibelles />)} />
+                <Route path="/admin/libelle/nouveau" element={admin(<FormLibelle key="nouveau" />)} />
+                <Route path="/admin/libelle/:id" element={admin(<ParCle composant={FormLibelle} />)} />
                 <Route path="/admin/historique" element={admin(<Historique />)} />
                 <Route path="/admin/rapport" element={admin(<Rapport />)} />
                 <Route path="/admin/parametres" element={admin(<Parametres />)} />

@@ -9,7 +9,7 @@ import { DEMO_CONTRIBUTIONS, DEMO_DEPENSES, DEMO_DONS } from './demo';
 import { cleNom } from './calculs';
 import initiales from './donneesInitiales.json';
 
-export type CollectionOperation = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'emprunts';
+export type CollectionOperation = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'emprunts' | 'libelles';
 
 type Donnees = Record<string, unknown>;
 

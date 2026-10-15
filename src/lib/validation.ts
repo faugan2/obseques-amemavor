@@ -99,6 +99,12 @@ export const schemaEmprunt = z
     message: 'Le montant remboursé ne peut pas dépasser le montant emprunté.',
   });
 
+export const schemaLibelle = z.object({
+  nom: requis(120, 'Indiquez le nom du libellé.'),
+  description: texte(500),
+  ordre: z.number().int(),
+});
+
 /** Transforme les erreurs zod en { champ: message }. */
 export function erreursParChamp(e: z.ZodError): Record<string, string> {
   const r: Record<string, string> = {};
