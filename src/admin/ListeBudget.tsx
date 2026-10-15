@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { GabaritAdmin } from './Gabarit';
 import { EtatVide, Chargement, classes, useNotifier } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
-import { creer } from '../lib/operations';
+import { creer, modifier } from '../lib/operations';
 import { montant, pourRecherche } from '../lib/format';
+import initiales from '../lib/donneesInitiales.json';
 
 /** Administration du budget : lignes de budget par libellé. */
 export default function ListeBudget() {
@@ -41,6 +42,43 @@ export default function ListeBudget() {
     }
   };
 
+  // Importer les montants du fichier Excel
+  const importerMontants = async () => {
+    setSyncEnCours(true);
+    try {
+      let mises_a_jour = 0;
+      for (const poste of (initiales as any).postes) {
+        // Chercher le libellé correspondant
+        const lib = libelles.find((l) => {
+          const nomNorm = (n: string) => n.toUpperCase().trim();
+          return nomNorm(l.nom) === nomNorm(poste.libelle);
+        });
+
+        if (lib) {
+          // Trouver la ligne de budget
+          const bl = budgetLignes.find((bl) => bl.id_libelle === lib.id);
+          if (bl) {
+            // Mettre à jour avec les montants du fichier
+            const avant = { ...bl };
+            const apres = {
+              ...bl,
+              prevision: poste.prevision || 0,
+              financement: poste.financement || '',
+              responsable: poste.responsable || '',
+            };
+            await modifier('budget', bl.id, avant as unknown as Record<string, unknown>, apres, `Budget · ${lib.nom}`, 'Import des montants depuis Excel');
+            mises_a_jour++;
+          }
+        }
+      }
+      notifier(`✅ ${mises_a_jour} ligne${mises_a_jour > 1 ? 's' : ''} mise${mises_a_jour > 1 ? 's' : ''} à jour`);
+    } catch (e) {
+      notifier(`❌ Erreur: ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
+    } finally {
+      setSyncEnCours(false);
+    }
+  };
+
   // Joindre les lignes de budget avec les libellés
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
@@ -60,6 +98,7 @@ export default function ListeBudget() {
   }, [budgetLignes, libelles, recherche]);
 
   const manquantes = libelles.filter((lib) => !budgetLignes.some((bl) => bl.id_libelle === lib.id)).length;
+  const sansMotants = budgetLignes.filter((bl) => bl.prevision === 0).length;
 
   return (
     <GabaritAdmin
@@ -67,6 +106,15 @@ export default function ListeBudget() {
       sousTitre="Montants prévisionnels et réalisés par libellé."
       actions={
         <div className="flex gap-3">
+          {sansMotants > 0 && (
+            <button
+              onClick={() => void importerMontants()}
+              disabled={syncEnCours}
+              className="inline-flex min-h-[46px] items-center rounded-xl bg-recu px-5 text-sm font-extrabold text-white no-underline hover:opacity-90 disabled:opacity-50"
+            >
+              {syncEnCours ? <Chargement /> : `Importer montants`}
+            </button>
+          )}
           {manquantes > 0 && (
             <button
               onClick={() => void synchroniser()}
