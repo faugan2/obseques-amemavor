@@ -120,7 +120,6 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       parametresExistent,
       synthese: synthese(contributions, dons, depenses, emprunts),
       budget: budgetLignes.length > 0 ? (
-        console.log('📊 Appel budgetDepuisLignes avec:', { budgetLignesCount: budgetLignes.length, libellesCount: libelles.length, depensesCount: depenses.length }),
         budgetDepuisLignes(budgetLignes, depenses, libelles)
       ) : budget(postes, depenses, devis),
       derniereMaj: derniereMiseAJour([contributions, dons, depenses, postes, devis, emprunts, libelles, budgetLignes]),
