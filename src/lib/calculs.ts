@@ -140,14 +140,20 @@ export interface Budget {
  * @param depenses Toutes les dépenses liées aux libellés via id_libelle
  */
 export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], libelles: any[] = []): Budget {
-  const d = actives(depenses);
-  const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
+  // Créer une map des libelles par nom pour la migration
+  const libellesParNom = new Map(libelles.map((l: any) => [l.nom, l]));
 
-  console.log('🔍 Dépenses actives:');
-  d.slice(0, 3).forEach((dep, i) => {
-    console.log(`   [${i}] designation="${dep.designation}", id_libelle="${dep.id_libelle}", posteId="${dep.posteId}", montant=${dep.montant}, montantPaye=${dep.montantPaye}`);
+  // Migration: ajouter id_libelle aux dépenses qui ne l'ont pas
+  const dAvecLibelle = depenses.map((dep) => {
+    if (!dep.id_libelle && dep.categorie) {
+      const libelle = libellesParNom.get(dep.categorie);
+      return { ...dep, id_libelle: libelle?.id_libelle || libelle?.id };
+    }
+    return dep;
   });
-  console.log('   ... total:', d.length, 'dépenses');
+
+  const d = actives(dAvecLibelle);
+  const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
 
   const lignes: LigneBudget[] = budgetLignes.map((bl, idx) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
@@ -159,9 +165,6 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
     const libelleData = libellesMap.get(bl.id_libelle);
     const nomFinal = libelleData?.nom || bl.nom || '';
 
-    if (idx < 5) {
-      console.log(`📊 Ligne [${idx}] "${nomFinal}": id_libelle="${bl.id_libelle}", dépenses trouvées=${liees.length}, realise=${realise}, engage=${engage}`);
-    }
 
     return {
       poste: {
