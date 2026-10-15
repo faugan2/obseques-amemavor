@@ -49,6 +49,7 @@ export default function FormDepense() {
   const { id } = useParams();
   const edition = Boolean(id);
   const { depenses, postes, parametres, chargement } = useDonnees();
+  const postesTries = [...postes].sort((a, b) => a.ordre - b.ordre || a.libelle.localeCompare(b.libelle));
   const [params] = useSearchParams();
   const existante = depenses.find((d) => d.id === id);
   const naviguer = useNavigate();
@@ -191,7 +192,7 @@ export default function FormDepense() {
                   }}
                 >
                   <option value="">Choisir…</option>
-                  {postes.filter((p) => !p.annule).map((p) => <option key={p.id} value={p.id}>{p.libelle}</option>)}
+                  {postesTries.filter((p) => !p.annule).map((p) => <option key={p.id} value={p.id}>{p.libelle}</option>)}
                 </select>
               </Champ>
             </div>
