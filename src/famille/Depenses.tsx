@@ -25,9 +25,6 @@ export default function Depenses() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [depenses, recherche]);
 
-  const engage = s.totalDepense + s.resteAPayer;
-  const pctPaye = engage ? Math.round((s.totalDepense / engage) * 100) : 0;
-
   const nbPages = Math.max(1, Math.ceil(payees.length / PAR_PAGE));
   const pageCourante = Math.min(numPage, nbPages - 1);
   const visibles = payees.slice(pageCourante * PAR_PAGE, (pageCourante + 1) * PAR_PAGE);
@@ -43,14 +40,6 @@ export default function Depenses() {
             <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Payé</div>
             <div className="text-[30px] font-extrabold text-depense">{montant(s.totalDepense)} <span className="text-sm">FCFA</span></div>
           </div>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Reste à payer</div>
-            <div className="text-[30px] font-extrabold text-attente">{montant(s.resteAPayer)} <span className="text-sm">FCFA</span></div>
-          </div>
-        </div>
-        <div className="flex h-3.5 overflow-hidden rounded-lg bg-trait" role="img" aria-label={`${pctPaye} % payé, ${100 - pctPaye} % reste à payer`}>
-          <div className="bg-depense" style={{ width: `${pctPaye}%` }} />
-          <div className="bg-attente-barre" style={{ width: `${engage ? 100 - pctPaye : 0}%` }} />
         </div>
       </section>
 
