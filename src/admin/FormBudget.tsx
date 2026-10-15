@@ -15,6 +15,8 @@ type Etat = {
   responsable: string;
   financement: string;
   commentaire: string;
+  ajoutResponsable: boolean;
+  ajoutFinancement: boolean;
 };
 
 const VIDE: Etat = {
@@ -23,6 +25,8 @@ const VIDE: Etat = {
   responsable: '',
   financement: '',
   commentaire: '',
+  ajoutResponsable: false,
+  ajoutFinancement: false,
 };
 
 export default function FormBudget() {
@@ -142,35 +146,103 @@ export default function FormBudget() {
             </div>
 
             <Champ id="responsable" libelle="Responsable" erreur={erreurs.responsable}>
-              <select
-                id="responsable"
-                value={f.responsable}
-                onChange={(e) => maj('responsable', e.target.value)}
-                className="champ"
-              >
-                <option value="">-- Choisir un responsable --</option>
-                {parametres.responsables.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
+              {f.ajoutResponsable ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={f.responsable}
+                    onChange={(e) => maj('responsable', e.target.value)}
+                    maxLength={120}
+                    className="champ flex-1"
+                    placeholder="Nouveau responsable"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      maj('ajoutResponsable', false);
+                      maj('responsable', '');
+                    }}
+                    className="rounded-[10px] border border-[#D8DBD3] px-3 font-bold text-encre hover:bg-fond"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <select
+                  id="responsable"
+                  value={f.responsable}
+                  onChange={(e) => {
+                    if (e.target.value === '__ajouter__') {
+                      maj('ajoutResponsable', true);
+                      maj('responsable', '');
+                    } else {
+                      maj('responsable', e.target.value);
+                    }
+                  }}
+                  className="champ"
+                >
+                  <option value="">-- Choisir un responsable --</option>
+                  {parametres.responsables.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                  <option value="__ajouter__" className="font-bold">
+                    + Ajouter un nouveau
                   </option>
-                ))}
-              </select>
+                </select>
+              )}
             </Champ>
 
             <Champ id="financement" libelle="Financement" erreur={erreurs.financement}>
-              <select
-                id="financement"
-                value={f.financement}
-                onChange={(e) => maj('financement', e.target.value)}
-                className="champ"
-              >
-                <option value="">-- Choisir une source de financement --</option>
-                {parametres.sourcesFinancement.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+              {f.ajoutFinancement ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={f.financement}
+                    onChange={(e) => maj('financement', e.target.value)}
+                    maxLength={120}
+                    className="champ flex-1"
+                    placeholder="Nouveau financement"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      maj('ajoutFinancement', false);
+                      maj('financement', '');
+                    }}
+                    className="rounded-[10px] border border-[#D8DBD3] px-3 font-bold text-encre hover:bg-fond"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <select
+                  id="financement"
+                  value={f.financement}
+                  onChange={(e) => {
+                    if (e.target.value === '__ajouter__') {
+                      maj('ajoutFinancement', true);
+                      maj('financement', '');
+                    } else {
+                      maj('financement', e.target.value);
+                    }
+                  }}
+                  className="champ"
+                >
+                  <option value="">-- Choisir une source de financement --</option>
+                  {parametres.sourcesFinancement.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                  <option value="__ajouter__" className="font-bold">
+                    + Ajouter un nouveau
                   </option>
-                ))}
-              </select>
+                </select>
+              )}
             </Champ>
 
             <Champ id="commentaire" libelle="Commentaire (optionnel)" erreur={erreurs.commentaire}>
