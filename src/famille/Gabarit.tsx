@@ -86,7 +86,7 @@ export function GabaritFamille({
             </>
           )}
           Consultation en lecture seule · Données tenues par le trésorier de la famille ·{' '}
-          <Link to="/admin" className="font-bold text-recu">Espace trésorier</Link>
+          <a href="/obseques-amemavor/admin" target="_blank" rel="noopener noreferrer" className="font-bold text-recu">Espace trésorier</a>
         </span>
       </footer>
 
