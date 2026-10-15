@@ -55,7 +55,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       fini();
     };
 
-    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses_new' | 'postes' | 'devis' | 'emprunts' | 'libelles', poser: (l: T[]) => void) => {
+    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses_new' | 'postes' | 'devis' | 'emprunts' | 'libelles' | 'budget', poser: (l: T[]) => void) => {
       let premier = true;
       const estOrdre = nom === 'postes' || nom === 'libelles';
       const champTri = estOrdre ? 'ordre' : 'date';
