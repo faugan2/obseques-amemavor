@@ -71,9 +71,6 @@ export function ListeLibelles() {
                         <span className="font-bold">{l.nom}</span>
                         {l.description && <span className="text-xs text-encre-pale">{l.description}</span>}
                       </div>
-                      <span className="shrink-0 rounded-full bg-attente-pale px-3 py-1 text-xs font-semibold text-attente-fonce">
-                        Ordre: {l.ordre}
-                      </span>
                     </Link>
                   </li>
                 );
