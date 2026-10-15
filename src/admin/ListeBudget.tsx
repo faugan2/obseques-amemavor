@@ -79,13 +79,20 @@ export default function ListeBudget() {
     }
   };
 
-  // Joindre les lignes de budget avec les libellés
+  // Joindre les lignes de budget avec les libellés et les montants réalisés
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
     return budgetLignes
       .map((bl) => {
         const lib = libelles.find((l) => l.id === bl.id_libelle);
-        return { ...bl, libelle: lib };
+        // Récupérer les montants réalisés depuis budgetStats
+        const ligneStat = budgetStats.lignes.find((l) => l.poste.id === bl.id_libelle);
+        return {
+          ...bl,
+          libelle: lib,
+          realise: ligneStat?.realise || 0, // Montant payé calculé à partir des dépenses
+          engage: ligneStat?.engage || 0   // Montant engagé
+        };
       })
       .filter((l) => {
         if (!q) return true;
@@ -99,7 +106,7 @@ export default function ListeBudget() {
         const nomB = (b.libelle?.nom || '').toUpperCase();
         return nomA.localeCompare(nomB);
       });
-  }, [budgetLignes, libelles, recherche]);
+  }, [budgetLignes, libelles, recherche, budgetStats]);
 
   const manquantes = libelles.filter((lib) => !budgetLignes.some((bl) => bl.id_libelle === lib.id)).length;
   const sansMotants = budgetLignes.filter((bl) => bl.prevision === 0).length;
@@ -183,7 +190,7 @@ export default function ListeBudget() {
               </thead>
               <tbody>
                 {lignes.map((l, i) => {
-                  const reste = (l.prevision || 0) - (l.montantPaye || 0);
+                  const reste = (l.prevision || 0) - (l.realise || 0);
                   return (
                     <tr key={l.id} className={i > 0 ? 'border-t border-trait' : ''}>
                       <td className="px-5 py-3 font-bold">{l.libelle?.nom || '—'}</td>
@@ -193,7 +200,7 @@ export default function ListeBudget() {
                         {l.prevision ? montant(l.prevision) : <span className="text-encre-pale">à chiffrer</span>}
                       </td>
                       <td className="whitespace-nowrap px-2.5 py-3 text-right font-bold text-depense">
-                        {l.montantPaye ? montant(l.montantPaye) : '—'}
+                        {l.realise ? montant(l.realise) : '—'}
                       </td>
                       <td className={classes('whitespace-nowrap px-2.5 py-3 text-right font-semibold', reste < 0 ? 'text-depense-fonce' : 'text-recu')}>
                         {l.prevision ? montant(Math.max(0, reste)) : '—'}
