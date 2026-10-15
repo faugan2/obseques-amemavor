@@ -141,7 +141,12 @@ export interface Budget {
  */
 export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], libelles: any[] = []): Budget {
   const d = actives(depenses);
-  const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle, l]));
+
+  console.log('🔧 budgetDepuisLignes - Structure des données:');
+  console.log('   budgetLignes[0]:', budgetLignes[0]);
+  console.log('   libelles[0]:', libelles[0]);
+
+  const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
 
   console.log('🔧 budgetDepuisLignes - Données reçues:');
   console.log('   budgetLignes:', budgetLignes.length, 'éléments');
