@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { GabaritFamille } from './Gabarit';
 import { EtatVide } from '../composants/ui';
+import { IconeRecherche } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
-import { dateCourte, montant } from '../lib/format';
+import { dateCourte, montant, pourRecherche } from '../lib/format';
 import type { Depense } from '../types';
 
 const PAR_PAGE = 20;
@@ -10,10 +11,19 @@ const PAR_PAGE = 20;
 export default function Depenses() {
   const { depenses, synthese: s } = useDonnees();
   const [numPage, setPage] = useState(0);
+  const [recherche, setRecherche] = useState('');
 
   const payees = useMemo(() => {
-    return depenses.filter((d) => !d.annule && d.montantPaye > 0).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [depenses]);
+    const q = pourRecherche(recherche);
+    return depenses
+      .filter(
+        (d) =>
+          !d.annule &&
+          d.montantPaye > 0 &&
+          (!q || pourRecherche(`${d.designation} ${d.responsable} ${d.financement} ${d.categorie}`).includes(q)),
+      )
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [depenses, recherche]);
 
   const engage = s.totalDepense + s.resteAPayer;
   const pctPaye = engage ? Math.round((s.totalDepense / engage) * 100) : 0;
@@ -45,9 +55,26 @@ export default function Depenses() {
       </section>
 
       <section className="carte flex flex-col">
+        <div className="border-b border-trait p-4">
+          <div className="relative w-full max-w-[340px]">
+            <IconeRecherche taille={18} className="absolute left-3.5 top-[13px] text-encre-pale" />
+            <input
+              type="search"
+              aria-label="Rechercher une dépense"
+              placeholder="Rechercher une dépense…"
+              value={recherche}
+              onChange={(e) => {
+                setRecherche(e.target.value);
+                setPage(0);
+              }}
+              className="min-h-[44px] w-full rounded-full border border-[#D8DBD3] bg-[#F7F8F5] pl-11 pr-4 text-sm outline-none focus:border-recu"
+            />
+          </div>
+        </div>
+
         {payees.length === 0 ? (
           <div className="p-6">
-            <EtatVide titre="Aucune dépense payée pour le moment" />
+            <EtatVide titre={recherche ? 'Aucune dépense ne correspond à votre recherche' : 'Aucune dépense payée pour le moment'} />
           </div>
         ) : (
           <>
