@@ -4,7 +4,7 @@ import { EtatVide, Puce, classes } from '../composants/ui';
 import { IconeRecherche, IconeCroix } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import type { LigneBudget } from '../lib/calculs';
-import type { Depense } from '../types';
+import type { Depense, Contribution } from '../types';
 import { montant, pourRecherche, dateLongue } from '../lib/format';
 
 type Filtre = 'tous' | 'engages' | 'non-chiffres' | 'depassements';
@@ -17,6 +17,98 @@ function Etat({ l }: { l: LigneBudget }) {
   if (l.engage > 0) return <Puce ton="attente">En cours</Puce>;
   if (l.prevision === 0) return <Puce ton="neutre">À chiffrer</Puce>;
   return <Puce ton="neutre">À venir</Puce>;
+}
+
+function ModalCaisse({ contributions, onClose }: { contributions: Contribution[]; onClose: () => void }) {
+  const cotisations = contributions.filter((c) => c.type === 'cotisation' && !c.annule);
+  const participations = contributions.filter((c) => c.type === 'participation' && !c.annule);
+  const totalCotisations = cotisations.reduce((sum, c) => sum + c.montantRecu, 0);
+  const totalParticipations = participations.reduce((sum, c) => sum + c.montantRecu, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-titre text-xl font-normal">Caisse reçue</h2>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-fond">
+            <IconeCroix taille={24} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {cotisations.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-sm mb-2">Cotisations ({cotisations.length})</h3>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {cotisations.map((c) => (
+                  <div key={c.id} className="flex justify-between text-sm bg-[#F7F8F5] p-2 rounded">
+                    <span>{c.contributeur}</span>
+                    <span className="font-bold text-recu">{montant(c.montantRecu)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between text-sm font-semibold border-t border-trait pt-2">
+                <span>Sous-total cotisations</span>
+                <span className="text-recu">{montant(totalCotisations)}</span>
+              </div>
+            </div>
+          )}
+
+          {participations.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-sm mb-2">Participations ({participations.length})</h3>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {participations.map((c) => (
+                  <div key={c.id} className="flex justify-between text-sm bg-[#F7F8F5] p-2 rounded">
+                    <span>{c.contributeur}</span>
+                    <span className="font-bold text-recu">{montant(c.montantRecu)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between text-sm font-semibold border-t border-trait pt-2">
+                <span>Sous-total participations</span>
+                <span className="text-recu">{montant(totalParticipations)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 border-t-2 border-encre pt-3 flex justify-between text-sm font-extrabold">
+          <span>Total caisse:</span>
+          <span className="text-recu">{montant(totalCotisations + totalParticipations)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalBudget({ lignes, onClose }: { lignes: LigneBudget[]; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-titre text-xl font-normal">Budget prévu</h2>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-fond">
+            <IconeCroix taille={24} />
+          </button>
+        </div>
+
+        <div className="space-y-1 max-h-96 overflow-y-auto">
+          {lignes.map((l) => (
+            <div key={l.poste.id} className="flex justify-between text-sm bg-[#F7F8F5] p-2 rounded">
+              <span className="flex-1">{l.poste.libelle}</span>
+              <span className="font-bold">{montant(l.prevision)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 border-t-2 border-encre pt-3 flex justify-between text-sm font-extrabold">
+          <span>Total budget:</span>
+          <span>{montant(lignes.reduce((sum, l) => sum + l.prevision, 0))}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: string; id_libelle: string; depenses: Depense[]; onClose: () => void }) {
@@ -65,11 +157,12 @@ function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: 
 }
 
 export default function Budget() {
-  const { budget: b, depenses, synthese: s } = useDonnees();
+  const { budget: b, depenses, contributions, synthese: s } = useDonnees();
   const [filtre, setFiltre] = useState<Filtre>('tous');
   const [recherche, setRecherche] = useState('');
   const [numPage, setPage] = useState(0);
   const [libelleSelectionnee, setLibelleSelectionnee] = useState<{ id: string; nom: string } | null>(null);
+  const [modalOuvert, setModalOuvert] = useState<'caisse' | 'budget' | null>(null);
 
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
@@ -103,20 +196,37 @@ export default function Budget() {
     <GabaritFamille titre="Budget" sousTitre="Les postes de dépenses prévus pour les obsèques, et ce qui a déjà été engagé et payé sur chacun.">
       <section className="flex flex-col gap-4 rounded-[22px] bg-white p-6 shadow-flottante">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4">
-          {[
-            { l: 'Caisse reçue', v: s.totalEncaisse, c: 'text-recu', desc: 'Cotisations + Participations' },
-            { l: 'Budget prévu', v: b.totalPrevision, c: '', desc: 'Total prévisionnel' },
-            { l: 'Montant payé', v: b.totalRealise, c: 'text-depense', desc: 'Dépenses réglées' },
-            { l: s.solde >= 0 ? 'Solde caisse' : 'Déficit', v: Math.abs(s.solde), c: s.solde >= 0 ? 'text-recu' : 'text-depense-fonce', desc: s.solde >= 0 ? 'Caisse − Payé' : 'Payé − Caisse' },
-          ].map((k) => (
-            <div key={k.l}>
-              <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">{k.l}</div>
-              <div className={classes('text-[28px] font-extrabold', k.c)}>
-                {montant(k.v)} <span className="text-sm">FCFA</span>
-              </div>
-              <div className="text-xs text-encre-pale">{k.desc}</div>
+          <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => setModalOuvert('caisse')}>
+            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Caisse reçue</div>
+            <div className={classes('text-[28px] font-extrabold text-recu')}>
+              {montant(s.totalEncaisse)} <span className="text-sm">FCFA</span>
             </div>
-          ))}
+            <div className="text-xs text-encre-pale">Cotisations + Participations</div>
+          </div>
+
+          <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => setModalOuvert('budget')}>
+            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Budget prévu</div>
+            <div className="text-[28px] font-extrabold">
+              {montant(b.totalPrevision)} <span className="text-sm">FCFA</span>
+            </div>
+            <div className="text-xs text-encre-pale">Total prévisionnel</div>
+          </div>
+
+          <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => {}}>
+            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Montant payé</div>
+            <div className="text-[28px] font-extrabold text-depense">
+              {montant(b.totalRealise)} <span className="text-sm">FCFA</span>
+            </div>
+            <div className="text-xs text-encre-pale">Dépenses réglées</div>
+          </div>
+
+          <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => {}}>
+            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">{s.solde >= 0 ? 'Solde caisse' : 'Déficit'}</div>
+            <div className={classes('text-[28px] font-extrabold', s.solde >= 0 ? 'text-recu' : 'text-depense-fonce')}>
+              {montant(Math.abs(s.solde))} <span className="text-sm">FCFA</span>
+            </div>
+            <div className="text-xs text-encre-pale">{s.solde >= 0 ? 'Caisse − Payé' : 'Payé − Caisse'}</div>
+          </div>
         </div>
         <div className="flex h-3 overflow-hidden rounded-lg bg-trait" role="img" aria-label={`${pct} % du budget engagé`}>
           <div className="bg-depense" style={{ width: `${b.totalPrevision ? Math.min(100, (b.totalRealise / b.totalPrevision) * 100) : 0}%` }} />
@@ -224,6 +334,20 @@ export default function Budget() {
           id_libelle={libelleSelectionnee.id}
           depenses={depenses}
           onClose={() => setLibelleSelectionnee(null)}
+        />
+      )}
+
+      {modalOuvert === 'caisse' && (
+        <ModalCaisse
+          contributions={contributions}
+          onClose={() => setModalOuvert(null)}
+        />
+      )}
+
+      {modalOuvert === 'budget' && (
+        <ModalBudget
+          lignes={b.lignes}
+          onClose={() => setModalOuvert(null)}
         />
       )}
     </GabaritFamille>
