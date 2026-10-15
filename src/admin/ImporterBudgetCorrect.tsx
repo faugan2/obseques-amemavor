@@ -4,6 +4,7 @@ import { Chargement, useNotifier } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
 import { creer } from '../lib/operations';
 
+// Seulement les libellés avec MONTANT > 0
 const BUDGETS_A_IMPORTER = [
   { nom: 'FRAIS MORGUE', prevision: 220000, financement: 'JUSTIN', responsable: 'CAROLE' },
   { nom: 'ELECTRICITE ECLAIRAGE ZONE SOMBRE DOMICILE', prevision: 45000, financement: 'ENVELOPPE PAPA', responsable: 'CAROLE' },
@@ -27,33 +28,6 @@ const BUDGETS_A_IMPORTER = [
   { nom: 'ACHATS 50 CARTONS D\'EAU', prevision: 175000, financement: '', responsable: '' },
   { nom: 'GRANDE TENTE RECEPTION DU SAMEDI ET MISE EN PLACE', prevision: 4000000, financement: '', responsable: '' },
   { nom: 'RECEPTION DU SAMEDI (DEJEUNER DE 500 PERSONNES)', prevision: 3260000, financement: '', responsable: '' },
-  { nom: 'LOCATION GROUPE ELECTROGENE', prevision: 0, financement: '', responsable: '', commentaire: 'Besoins 03 Sites' },
-  { nom: 'AUTORISATION A LA MAIRIE', prevision: 0, financement: '', responsable: '' },
-  { nom: 'LOCATION BUS', prevision: 0, financement: '', responsable: '' },
-  { nom: 'TRAVAUX DIVERS ELECTRICITE ELE', prevision: 0, financement: '', responsable: '' },
-  { nom: 'ANIMATEUR', prevision: 0, financement: '', responsable: '' },
-  { nom: 'HOTESSES COORDINATION', prevision: 0, financement: '', responsable: '' },
-  { nom: 'SOPALIN', prevision: 0, financement: '', responsable: '' },
-  { nom: 'SAVON LIQUIDE', prevision: 0, financement: '', responsable: '' },
-  { nom: 'REPAS FRI/SAT/SUN', prevision: 0, financement: '', responsable: '' },
-  { nom: 'CAMION SABLE 10 ROUES', prevision: 0, financement: '', responsable: '' },
-  { nom: 'IMPRESSION FAIRE PARTS', prevision: 0, financement: '', responsable: '' },
-  { nom: 'IMPRESSION BACHES', prevision: 0, financement: '', responsable: '' },
-  { nom: 'GEL MAINS', prevision: 0, financement: '', responsable: '' },
-  { nom: 'EMOLUMENTS  PORTEURS CERCUEIL', prevision: 0, financement: '', responsable: '' },
-  { nom: 'ENVELOPPE CUISINE DES ENFANTS ET ETRANGERS DE PAPA', prevision: 0, financement: '', responsable: '' },
-  { nom: 'ENVELOPPE LA GRANDE FAMILLE DE DANYI (ETSI MAWUGBE & DAMALI)', prevision: 0, financement: '', responsable: '' },
-  { nom: 'GROUPE ACCUEIL PAROISSE', prevision: 0, financement: '', responsable: '' },
-  { nom: 'ACHAT PRODUITS ENTRETIEN MAISON', prevision: 0, financement: '', responsable: '' },
-  { nom: 'AGRANDISSEMENT 1 PHOTO', prevision: 0, financement: '', responsable: '' },
-  { nom: 'TRANSPORT CHEVALET PHOTO', prevision: 0, financement: '', responsable: '' },
-  { nom: 'ANNONCE TVT', prevision: 0, financement: '', responsable: '' },
-  { nom: 'REPORTAGE PHOTO VIDEO', prevision: 0, financement: '', responsable: '' },
-  { nom: 'NETTOYAGE COMPLET MAISON APRES ENTERREMENT', prevision: 0, financement: '', responsable: '' },
-  { nom: 'PERMIS D\'INHUMER', prevision: 0, financement: '', responsable: '' },
-  { nom: 'ACHAT ACCESOIRES TENUES DEFUNTS', prevision: 0, financement: '', responsable: '' },
-  { nom: 'COMMANDE DE GERBES', prevision: 0, financement: '', responsable: '' },
-  { nom: 'FORFAIT POUR FACTURE ELECTRICITE DES 3 DOMICILES ELE', prevision: 0, financement: '', responsable: '' },
 ];
 
 export default function ImporterBudgetCorrect() {
@@ -114,7 +88,7 @@ export default function ImporterBudgetCorrect() {
   return (
     <GabaritAdmin
       titre="Import des budgets"
-      sousTitre="Importer les 49 libellés et budgets du CSV"
+      sousTitre="Importer les 22 libellés avec montants du CSV"
     >
       {erreur && (
         <div className="rounded-2xl bg-depense-pale p-4 text-depense-fonce mb-4">
@@ -123,7 +97,7 @@ export default function ImporterBudgetCorrect() {
       )}
 
       <div className="rounded-2xl bg-white p-6 shadow-flottante">
-        <h3 className="text-lg font-bold mb-4">📊 À importer: {BUDGETS_A_IMPORTER.length} libellés</h3>
+        <h3 className="text-lg font-bold mb-4">📊 À importer: {BUDGETS_A_IMPORTER.length} libellés (seulement ceux avec montants > 0)</h3>
 
         <div className="overflow-x-auto mb-6">
           <table className="w-full text-sm border-collapse">
@@ -160,7 +134,7 @@ export default function ImporterBudgetCorrect() {
           disabled={importEnCours}
           className="inline-flex min-h-[46px] items-center rounded-xl bg-recu px-6 text-sm font-extrabold text-white hover:opacity-90 disabled:opacity-50"
         >
-          {importEnCours ? <Chargement /> : `✅ Importer les ${BUDGETS_A_IMPORTER.length} libellés + budgets`}
+          {importEnCours ? <Chargement /> : `✅ Importer les 22 libellés + budgets`}
         </button>
       </div>
     </GabaritAdmin>
