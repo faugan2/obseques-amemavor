@@ -135,6 +135,35 @@ export interface Budget {
   nbDepassements: number;
 }
 
+/** Calcule les stats du budget depuis les budgetLignes (nouvelle approche). */
+export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[]): Budget {
+  const d = actives(depenses);
+  const lignes: LigneBudget[] = budgetLignes.map((bl) => {
+    // Récupérer les dépenses liées à ce libellé via id_libelle (dans la future implémentation)
+    // Pour maintenant, on affiche juste les données du budgetLigne
+    return {
+      poste: { id: bl.id_libelle, libelle: '', prevision: 0, responsable: '', financement: '', commentaire: '', ordre: 0 } as Poste,
+      prevision: bl.prevision,
+      realise: bl.montantPaye,
+      engage: bl.montantPaye, // À améliorer quand on aura les dépenses liées
+      resteAPayer: (bl.prevision || 0) - (bl.montantPaye || 0),
+      ecart: (bl.prevision || 0) - (bl.montantPaye || 0),
+      nbDepenses: 0, // À améliorer
+      devisRetenu: null,
+    };
+  });
+
+  return {
+    lignes,
+    totalPrevision: somme(lignes, (l) => l.prevision),
+    totalRealise: somme(lignes, (l) => l.realise),
+    totalEngage: somme(lignes, (l) => l.engage),
+    horsBudget: { realise: 0, engage: 0, nb: 0 },
+    nbPostesNonChiffres: lignes.filter((l) => l.prevision === 0).length,
+    nbDepassements: lignes.filter((l) => l.prevision > 0 && l.engage > l.prevision).length,
+  };
+}
+
 export function budget(postes: Poste[], depenses: Depense[], devis: Devis[] = []): Budget {
   const d = actives(depenses);
   const ids = new Set(postes.map((p) => p.id));

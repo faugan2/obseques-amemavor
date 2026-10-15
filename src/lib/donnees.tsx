@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from './firebase';
 import { DOC_PARAMETRES, nomCollection } from './espace';
-import { budget, derniereMiseAJour, synthese, type Budget, type Synthese } from './calculs';
+import { budget, budgetDepuisLignes, derniereMiseAJour, synthese, type Budget, type Synthese } from './calculs';
 import { PARAMETRES_PAR_DEFAUT, type BudgetLigne, type Contribution, type Depense, type Devis, type Don, type Emprunt, type Libelle, type Parametres, type Poste } from '../types';
 
 interface EtatDonnees {
@@ -119,7 +119,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       parametres,
       parametresExistent,
       synthese: synthese(contributions, dons, depenses, emprunts),
-      budget: budget(postes, depenses, devis),
+      budget: budgetLignes.length > 0 ? budgetDepuisLignes(budgetLignes, depenses) : budget(postes, depenses, devis),
       derniereMaj: derniereMiseAJour([contributions, dons, depenses, postes, devis, emprunts, libelles, budgetLignes]),
       chargement: charges < 9,
       erreur,
