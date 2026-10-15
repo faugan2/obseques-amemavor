@@ -4,7 +4,7 @@ import { EtatVide, Puce, classes } from '../composants/ui';
 import { IconeRecherche, IconeCroix } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import type { LigneBudget } from '../lib/calculs';
-import type { Depense, Contribution, Emprunt } from '../types';
+import type { Depense, Emprunt } from '../types';
 import { montant, pourRecherche, dateLongue } from '../lib/format';
 
 const PAR_PAGE = 20;
@@ -18,62 +18,21 @@ function Etat({ l }: { l: LigneBudget }) {
   return <Puce ton="neutre">À venir</Puce>;
 }
 
-function ModalCaisse({ contributions, emprunts = [], onClose }: { contributions: Contribution[]; emprunts?: Emprunt[]; onClose: () => void }) {
-  const cotisations = contributions.filter((c) => c.type === 'cotisation' && !c.annule);
-  const participations = contributions.filter((c) => c.type === 'participation' && !c.annule);
+function ModalCaisse({ emprunts = [], onClose }: { emprunts?: Emprunt[]; onClose: () => void }) {
   const empruntsActifs = emprunts.filter((e) => !e.annule);
-
-  const totalCotisations = cotisations.reduce((sum, c) => sum + c.montantRecu, 0);
-  const totalParticipations = participations.reduce((sum, c) => sum + c.montantRecu, 0);
   const totalEmprunts = empruntsActifs.reduce((sum, e) => sum + e.montant, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-titre text-xl font-normal">Caisse reçue</h2>
+          <h2 className="font-titre text-xl font-normal">Fond de roulement</h2>
           <button type="button" onClick={onClose} className="rounded p-1 hover:bg-fond">
             <IconeCroix taille={24} />
           </button>
         </div>
 
         <div className="space-y-4">
-          {cotisations.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-sm mb-2">Cotisations ({cotisations.length})</h3>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
-                {cotisations.map((c) => (
-                  <div key={c.id} className="flex justify-between text-sm bg-[#F7F8F5] p-2 rounded">
-                    <span>{c.contributeur}</span>
-                    <span className="font-bold text-recu">{montant(c.montantRecu)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 flex justify-between text-sm font-semibold border-t border-trait pt-2">
-                <span>Sous-total cotisations</span>
-                <span className="text-recu">{montant(totalCotisations)}</span>
-              </div>
-            </div>
-          )}
-
-          {participations.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-sm mb-2">Participations ({participations.length})</h3>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
-                {participations.map((c) => (
-                  <div key={c.id} className="flex justify-between text-sm bg-[#F7F8F5] p-2 rounded">
-                    <span>{c.contributeur}</span>
-                    <span className="font-bold text-recu">{montant(c.montantRecu)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 flex justify-between text-sm font-semibold border-t border-trait pt-2">
-                <span>Sous-total participations</span>
-                <span className="text-recu">{montant(totalParticipations)}</span>
-              </div>
-            </div>
-          )}
-
           {empruntsActifs.length > 0 && (
             <div>
               <h3 className="font-semibold text-sm mb-2">Emprunts ({empruntsActifs.length})</h3>
@@ -97,8 +56,8 @@ function ModalCaisse({ contributions, emprunts = [], onClose }: { contributions:
         </div>
 
         <div className="mt-4 border-t-2 border-encre pt-3 flex justify-between text-sm font-extrabold">
-          <span>Total caisse:</span>
-          <span className="text-recu">{montant(totalCotisations + totalParticipations + totalEmprunts)}</span>
+          <span>Total fond de roulement:</span>
+          <span className="text-recu">{montant(totalEmprunts)}</span>
         </div>
       </div>
     </div>
@@ -222,7 +181,7 @@ function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: 
 }
 
 export default function Budget() {
-  const { budget: b, depenses, contributions, emprunts, synthese: s } = useDonnees();
+  const { budget: b, depenses, emprunts, synthese: s } = useDonnees();
   const [recherche, setRecherche] = useState('');
   const [numPage, setPage] = useState(0);
   const [libelleSelectionnee, setLibelleSelectionnee] = useState<{ id: string; nom: string } | null>(null);
@@ -246,11 +205,11 @@ export default function Budget() {
       <section className="flex flex-col gap-4 rounded-[22px] bg-white p-6 shadow-flottante">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4">
           <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => setModalOuvert('caisse')}>
-            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Caisse reçue</div>
+            <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Fond de roulement</div>
             <div className={classes('text-[28px] font-extrabold text-recu')}>
               {montant(s.totalEncaisse)} <span className="text-sm">FCFA</span>
             </div>
-            <div className="text-xs text-encre-pale">Cotisations + Participations + Emprunts</div>
+            <div className="text-xs text-encre-pale">Emprunts uniquement</div>
           </div>
 
           <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => setModalOuvert('budget')}>
@@ -388,7 +347,6 @@ export default function Budget() {
 
       {modalOuvert === 'caisse' && (
         <ModalCaisse
-          contributions={contributions}
           emprunts={emprunts}
           onClose={() => setModalOuvert(null)}
         />

@@ -49,7 +49,7 @@ export default function Accueil() {
 
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg bg-fond p-3">
-              <div className="text-xs font-bold uppercase tracking-[0.05em] text-encre-pale">Caisse reçue</div>
+              <div className="text-xs font-bold uppercase tracking-[0.05em] text-encre-pale">Fond de roulement</div>
               <div className="text-sm font-extrabold text-recu">{montant(s.totalEncaisse)}</div>
             </div>
             <div className="rounded-lg bg-fond p-3">

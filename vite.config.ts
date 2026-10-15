@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  base: '/obseques-amemavor/',
   plugins: [react()],
   build: {
     // Le SDK Firebase « compat » (syntaxe v8) est volumineux : ~240 ko compressés.

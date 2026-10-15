@@ -52,7 +52,7 @@ export interface Synthese {
   totalEmprunts: number;
   /** Montant des emprunts déjà remboursés. */
   totalEmpruntsRembourses: number;
-  /** Cotisations + participations + emprunts reçus. */
+  /** Emprunts uniquement (Fond de roulement). */
   totalEncaisse: number;
   totalDepense: number;
   resteAPayer: number;
@@ -78,7 +78,7 @@ export function synthese(contributions: Contribution[], dons: Don[], depenses: D
   const totalParticipations = somme(par, (x) => x.montantRecu);
   const totalEmprunts = somme(e, (x) => x.montant);
   const totalEmpruntsRembourses = somme(e, (x) => x.montantRembourse);
-  const totalEncaisse = totalCotisations + totalParticipations + totalEmprunts;
+  const totalEncaisse = totalEmprunts;
   const totalDepense = somme(d, (x) => x.montantPaye);
 
   const distincts = (l: Contribution[]) => new Set(l.filter((x) => x.montantRecu > 0).map((x) => x.contributeurCle || cleNom(x.contributeur))).size;

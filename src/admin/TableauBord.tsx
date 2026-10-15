@@ -119,7 +119,7 @@ export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) 
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
             {[
-              { l: 'Caisse reçue', v: s.totalEncaisse, d: 'Cotisations + Participations + Emprunts', c: 'text-recu' },
+              { l: 'Fond de roulement', v: s.totalEncaisse, d: 'Emprunts uniquement', c: 'text-recu' },
               { l: 'Dépenses payées', v: s.totalDepense, d: `${s.nbDepenses} dépense${s.nbDepenses > 1 ? 's' : ''}`, c: 'text-depense' },
               { l: 'Solde disponible', v: s.solde, d: 'Caisse − dépenses payées', c: s.solde < 0 ? 'text-depense' : 'text-recu' },
               { l: 'Budget prévu', v: b.totalPrevision, d: `${b.lignes.length} postes · ${b.nbPostesNonChiffres} à chiffrer`, c: '' },
