@@ -103,9 +103,21 @@ export default function ImporterLibelles() {
           description: '',
           ordre: (deja.length + i + 1) * 10,
         };
+        // Créer le libellé
         await creer('libelles', donnees, `Libellé · ${nom}`);
+
+        // Créer automatiquement la ligne de budget correspondante
+        const budgetData = {
+          id_libelle: '',
+          responsable: '',
+          financement: '',
+          prevision: 0,
+          montantPaye: 0,
+          commentaire: `Créé automatiquement pour le libellé "${nom}"`,
+        };
+        await creer('budget', budgetData, `Budget · ${nom}`);
       }
-      notifier(`✅ ${aImporter.length} libellés importés avec succès!`);
+      notifier(`✅ ${aImporter.length} libellés + lignes de budget importés!`);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : 'Erreur lors de l\'import');
     } finally {
