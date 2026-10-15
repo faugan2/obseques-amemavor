@@ -94,7 +94,7 @@ export function ParticipationsArgent() {
                   {c.annule ? (
                     <Puce ton="annule">Annulée</Puce>
                   ) : parametres.afficherMontants ? (
-                    <span className="whitespace-nowrap text-base font-extrabold text-recu">+{montant(c.montantRecu)}</span>
+                    <span className="whitespace-nowrap text-base font-extrabold text-recu">{montant(c.montantRecu)}</span>
                   ) : (
                     <Puce ton="recu">Reçu</Puce>
                   )}
