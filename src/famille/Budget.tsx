@@ -26,14 +26,16 @@ export default function Budget() {
 
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
-    return b.lignes.filter(
-      (l) =>
-        (filtre === 'tous' ||
-          (filtre === 'engages' && l.engage > 0) ||
-          (filtre === 'non-chiffres' && l.prevision === 0) ||
-          (filtre === 'depassements' && l.prevision > 0 && l.engage > l.prevision)) &&
-        (!q || pourRecherche(`${l.poste.libelle} ${l.poste.responsable} ${l.poste.financement}`).includes(q)),
-    );
+    return b.lignes
+      .filter(
+        (l) =>
+          (filtre === 'tous' ||
+            (filtre === 'engages' && l.engage > 0) ||
+            (filtre === 'non-chiffres' && l.prevision === 0) ||
+            (filtre === 'depassements' && l.prevision > 0 && l.engage > l.prevision)) &&
+          (!q || pourRecherche(`${l.poste.libelle} ${l.poste.responsable} ${l.poste.financement}`).includes(q)),
+      )
+      .sort((a, b) => b.prevision - a.prevision); // Tri décroissant par montant prévu
   }, [b.lignes, filtre, recherche]);
 
   const pct = b.totalPrevision ? Math.min(100, Math.round((b.totalEngage / b.totalPrevision) * 100)) : 0;
