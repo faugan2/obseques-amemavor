@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { GabaritFamille } from './Gabarit';
 import { EtatVide, Puce, classes } from '../composants/ui';
-import { IconeRecherche, IconeFermeture } from '../composants/icones';
+import { IconeRecherche, IconeCroix } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import type { LigneBudget } from '../lib/calculs';
 import type { Depense } from '../types';
@@ -28,7 +28,7 @@ function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: 
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-titre text-xl font-normal">{libelle}</h2>
           <button type="button" onClick={onClose} className="rounded p-1 hover:bg-fond">
-            <IconeFermeture taille={24} />
+            <IconeCroix taille={24} />
           </button>
         </div>
 
