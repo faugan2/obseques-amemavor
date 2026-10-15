@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { GabaritFamille } from './Gabarit';
 import { EtatVide, Puce, classes } from '../composants/ui';
-import { IconeRecherche } from '../composants/icones';
+import { IconeRecherche, IconeFermeture } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import type { LigneBudget } from '../lib/calculs';
-import { montant, pourRecherche } from '../lib/format';
+import type { Depense } from '../types';
+import { montant, pourRecherche, dateLongue } from '../lib/format';
 
 type Filtre = 'tous' | 'engages' | 'non-chiffres' | 'depassements';
 const PAR_PAGE = 20;
@@ -18,11 +19,57 @@ function Etat({ l }: { l: LigneBudget }) {
   return <Puce ton="neutre">À venir</Puce>;
 }
 
+function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: string; id_libelle: string; depenses: Depense[]; onClose: () => void }) {
+  const liees = depenses.filter((d) => !d.annule && (d.id_libelle === id_libelle || d.categorie === libelle));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-titre text-xl font-normal">{libelle}</h2>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-fond">
+            <IconeFermeture taille={24} />
+          </button>
+        </div>
+
+        {liees.length === 0 ? (
+          <p className="text-sm text-encre-pale">Aucune dépense pour ce libellé.</p>
+        ) : (
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {liees.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F7F8F5] p-3 text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold">{d.designation}</div>
+                  <div className="text-xs text-encre-pale">
+                    {dateLongue(d.date)}
+                    {d.responsable && ` · ${d.responsable}`}
+                    {d.financement && ` · ${d.financement}`}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-depense">{montant(d.montantPaye)}</div>
+                  {d.montantPaye < d.montant && <div className="text-xs text-encre-pale">/ {montant(d.montant)}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 border-t border-trait pt-3 flex justify-between text-sm font-semibold">
+          <span>Total:</span>
+          <span className="text-depense">{montant(liees.reduce((sum, d) => sum + d.montantPaye, 0))}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Budget() {
-  const { budget: b, synthese: s } = useDonnees();
+  const { budget: b, depenses, synthese: s } = useDonnees();
   const [filtre, setFiltre] = useState<Filtre>('tous');
   const [recherche, setRecherche] = useState('');
   const [numPage, setPage] = useState(0);
+  const [libelleSelectionnee, setLibelleSelectionnee] = useState<{ id: string; nom: string } | null>(null);
 
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
@@ -135,7 +182,7 @@ export default function Budget() {
                 </thead>
                 <tbody>
                   {visibles.map((l, i) => (
-                    <tr key={l.poste.id} className={i > 0 ? 'border-t border-trait' : ''}>
+                    <tr key={l.poste.id} className={classes(i > 0 ? 'border-t border-trait' : '', 'cursor-pointer hover:bg-[#F7F8F5]')} onClick={() => setLibelleSelectionnee({ id: l.poste.id, nom: l.poste.libelle })}>
                       <td className="px-5 py-3.5">
                         <div className="font-bold">{l.poste.libelle}</div>
                         <div className="text-xs text-encre-pale">
@@ -185,6 +232,15 @@ export default function Budget() {
           </span>
         </div>
       </section>
+
+      {libelleSelectionnee && (
+        <ModalHistorique
+          libelle={libelleSelectionnee.nom}
+          id_libelle={libelleSelectionnee.id}
+          depenses={depenses}
+          onClose={() => setLibelleSelectionnee(null)}
+        />
+      )}
     </GabaritFamille>
   );
 }
