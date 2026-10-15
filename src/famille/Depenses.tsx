@@ -46,17 +46,9 @@ function Carte({ d, montrerJustif }: { d: Depense; montrerJustif: boolean }) {
         {d.annule && d.motifAnnulation && <div className="text-xs text-encre-pale">Annulée : {d.motifAnnulation}</div>}
       </div>
       {montrerJustif && <BoutonJustificatif depense={d} />}
-      {d.annule ? (
-        <Puce ton="annule">Annulée</Puce>
-      ) : d.statut === 'payee' ? (
-        <Puce ton="recu">Payée</Puce>
-      ) : d.statut === 'partielle' ? (
-        <Puce ton="attente">Payé {montant(d.montantPaye)} / {montant(d.montant)}</Puce>
-      ) : (
-        <Puce ton="attente">Prévue · 0 payé</Puce>
-      )}
+      {d.annule && <Puce ton="annule">Annulée</Puce>}
       <div className={classes('min-w-[96px] text-right text-lg font-extrabold', attente ? 'text-attente' : 'text-depense')}>
-        {d.statut === 'payee' ? `−${montant(d.montantPaye)}` : montant(d.montant - d.montantPaye)}
+        {d.statut === 'payee' ? montant(d.montantPaye) : montant(d.montant - d.montantPaye)}
       </div>
     </article>
   );
@@ -85,7 +77,6 @@ export default function Depenses() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           <div><div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Payé</div><div className="text-[30px] font-extrabold text-depense">{montant(s.totalDepense)} <span className="text-sm">FCFA</span></div></div>
           <div><div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Reste à payer</div><div className="text-[30px] font-extrabold text-attente">{montant(s.resteAPayer)} <span className="text-sm">FCFA</span></div></div>
-          <div><div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Total engagé</div><div className="text-[30px] font-extrabold">{montant(engage)} <span className="text-sm">FCFA</span></div></div>
         </div>
         <div className="flex h-3.5 overflow-hidden rounded-lg bg-trait" role="img" aria-label={`${pctPaye} % payé, ${100 - pctPaye} % reste à payer`}>
           <div className="bg-depense" style={{ width: `${pctPaye}%` }} />
