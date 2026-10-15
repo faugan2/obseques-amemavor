@@ -116,7 +116,7 @@ export default function ImporterBudgetCorrect() {
   return (
     <GabaritAdmin
       titre="Import des budgets"
-      sousTitre="Importer les 49 libellés du CSV"
+      sousTitre="Importer les 50 libellés du CSV"
     >
       {erreur && (
         <div className="rounded-2xl bg-depense-pale p-4 text-depense-fonce mb-4">
@@ -162,7 +162,7 @@ export default function ImporterBudgetCorrect() {
           disabled={importEnCours}
           className="inline-flex min-h-[46px] items-center rounded-xl bg-recu px-6 text-sm font-extrabold text-white hover:opacity-90 disabled:opacity-50"
         >
-          {importEnCours ? <Chargement /> : `✅ Importer les 49 libellés + budgets`}
+          {importEnCours ? <Chargement /> : `✅ Importer les 50 libellés + budgets`}
         </button>
       </div>
     </GabaritAdmin>
