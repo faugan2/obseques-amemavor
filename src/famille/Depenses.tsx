@@ -72,7 +72,7 @@ export default function Depenses() {
                   <tr className="border-b border-trait text-left text-xs uppercase tracking-[0.05em] text-encre-pale">
                     <th className="px-5 py-3 font-bold">Date</th>
                     <th className="px-2.5 py-3 font-bold">Désignation</th>
-                    <th className="px-2.5 py-3 font-bold">Responsable / Financement</th>
+                    <th className="px-2.5 py-3 font-bold">Responsable</th>
                     <th className="px-2.5 py-3 text-right font-bold">Montant</th>
                   </tr>
                 </thead>
@@ -86,7 +86,7 @@ export default function Depenses() {
                       </td>
                       <td className="px-2.5 py-3.5 text-sm">
                         <div className="text-encre-douce">
-                          {[d.responsable && `Resp. : ${d.responsable}`, d.financement && `Fin. : ${d.financement}`].filter(Boolean).join(' · ') || '—'}
+                          {d.responsable || '—'}
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-2.5 py-3.5 text-right text-sm font-extrabold text-depense">{montant(d.montantPaye)}</td>
