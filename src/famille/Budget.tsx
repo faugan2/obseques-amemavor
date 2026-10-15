@@ -111,6 +111,48 @@ function ModalBudget({ lignes, onClose }: { lignes: LigneBudget[]; onClose: () =
   );
 }
 
+function ModalDepensesPaye({ depenses, onClose }: { depenses: Depense[]; onClose: () => void }) {
+  const payees = depenses.filter((d) => !d.annule && d.montantPaye > 0);
+  const totalPaye = payees.reduce((sum, d) => sum + d.montantPaye, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-titre text-xl font-normal">Montants payés ({payees.length})</h2>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-fond">
+            <IconeCroix taille={24} />
+          </button>
+        </div>
+
+        {payees.length === 0 ? (
+          <p className="text-sm text-encre-pale">Aucune dépense payée.</p>
+        ) : (
+          <div className="space-y-1 max-h-96 overflow-y-auto">
+            {payees.map((d) => (
+              <div key={d.id} className="flex flex-wrap justify-between gap-2 text-sm bg-[#F7F8F5] p-2 rounded">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold">{d.designation}</div>
+                  <div className="text-xs text-encre-pale">
+                    {dateLongue(d.date)}
+                    {d.responsable && ` · ${d.responsable}`}
+                  </div>
+                </div>
+                <span className="font-bold text-depense">{montant(d.montantPaye)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 border-t-2 border-encre pt-3 flex justify-between text-sm font-extrabold">
+          <span>Total payé:</span>
+          <span className="text-depense">{montant(totalPaye)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: string; id_libelle: string; depenses: Depense[]; onClose: () => void }) {
   const liees = depenses.filter((d) => !d.annule && (d.id_libelle === id_libelle || d.categorie === libelle));
 
@@ -162,7 +204,7 @@ export default function Budget() {
   const [recherche, setRecherche] = useState('');
   const [numPage, setPage] = useState(0);
   const [libelleSelectionnee, setLibelleSelectionnee] = useState<{ id: string; nom: string } | null>(null);
-  const [modalOuvert, setModalOuvert] = useState<'caisse' | 'budget' | null>(null);
+  const [modalOuvert, setModalOuvert] = useState<'caisse' | 'budget' | 'depenses' | null>(null);
 
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
@@ -212,7 +254,7 @@ export default function Budget() {
             <div className="text-xs text-encre-pale">Total prévisionnel</div>
           </div>
 
-          <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => {}}>
+          <div className="cursor-pointer rounded-lg p-3 hover:bg-fond transition" onClick={() => setModalOuvert('depenses')}>
             <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Montant payé</div>
             <div className="text-[28px] font-extrabold text-depense">
               {montant(b.totalRealise)} <span className="text-sm">FCFA</span>
@@ -347,6 +389,13 @@ export default function Budget() {
       {modalOuvert === 'budget' && (
         <ModalBudget
           lignes={b.lignes}
+          onClose={() => setModalOuvert(null)}
+        />
+      )}
+
+      {modalOuvert === 'depenses' && (
+        <ModalDepensesPaye
+          depenses={depenses}
           onClose={() => setModalOuvert(null)}
         />
       )}
