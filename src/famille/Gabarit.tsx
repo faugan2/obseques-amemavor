@@ -8,10 +8,10 @@ import { dateHeure, lienTelephone } from '../lib/format';
 const LIENS = [
   { vers: '/', libelle: 'Accueil', icone: IconeMaison },
   { vers: '/budget', libelle: 'Budget', icone: IconeBudget },
+  { vers: '/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
   { vers: '/cotisations', libelle: 'Cotisations', court: 'Cotisat.', icone: IconePersonnes },
   { vers: '/participations', libelle: 'Participations', court: 'Particip.', icone: IconeCoeur },
   { vers: '/emprunts', libelle: 'Emprunts', icone: IconePièce },
-  { vers: '/depenses', libelle: 'Dépenses', icone: IconeFlecheBas },
   { vers: '/devis', libelle: 'Devis prestataires', court: 'Devis', icone: IconeDocument },
 ];
 
