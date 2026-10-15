@@ -143,7 +143,12 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
   const d = actives(depenses);
   const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle, l]));
 
-  const lignes: LigneBudget[] = budgetLignes.map((bl) => {
+  console.log('🔧 budgetDepuisLignes - Données reçues:');
+  console.log('   budgetLignes:', budgetLignes.length, 'éléments');
+  console.log('   libelles:', libelles.length, 'éléments');
+  console.log('   libellesMap keys:', Array.from(libellesMap.keys()).slice(0, 3), '...');
+
+  const lignes: LigneBudget[] = budgetLignes.map((bl, idx) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
     const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
     const realise = somme(liees, (x) => x.montantPaye);
@@ -151,11 +156,16 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
 
     // Chercher le nom du libellé dans la collection libelles
     const libelleData = libellesMap.get(bl.id_libelle);
+    const nomFinal = libelleData?.nom || bl.nom || '';
+
+    if (idx < 3) {
+      console.log(`   [${idx}] id_libelle="${bl.id_libelle}", bl.nom="${bl.nom}", found="${libelleData?.nom || 'NOT FOUND'}", final="${nomFinal}"`);
+    }
 
     return {
       poste: {
         id: bl.id_libelle,
-        libelle: libelleData?.nom || bl.nom || '', // Utilise le nom du libellé si disponible
+        libelle: nomFinal, // Utilise le nom du libellé si disponible
         prevision: bl.prevision,
         responsable: bl.responsable,
         financement: bl.financement,

@@ -34,6 +34,7 @@ export default function Budget() {
   const [recherche, setRecherche] = useState('');
 
   const lignes = useMemo(() => {
+    console.log('📋 Budget.tsx - Premières lignes:', b.lignes.slice(0, 3).map(l => ({ id: l.poste.id, libelle: l.poste.libelle, engage: l.engage })));
     const q = pourRecherche(recherche);
     return b.lignes.filter(
       (l) =>
