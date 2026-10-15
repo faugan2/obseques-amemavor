@@ -126,16 +126,16 @@ export default function FormDepense() {
 
     setEnvoi(true);
     try {
-      const idDepense = existante?.id ?? nouvelIdentifiant('depenses');
+      const idDepense = existante?.id ?? nouvelIdentifiant('depenses_new');
       const donnees = { ...res.data };
       if (fichier) donnees.justificatif = await televerserJustificatif(idDepense, fichier);
       const libelle = `Dépense · ${donnees.designation}`;
       if (edition && existante) {
-        await modifier('depenses', existante.id, existante as unknown as Record<string, unknown>, donnees, libelle, motifCorrection.trim());
+        await modifier('depenses_new', existante.id, existante as unknown as Record<string, unknown>, donnees, libelle, motifCorrection.trim());
         notifier('Correction de la dépense enregistrée. Le solde a été recalculé.');
         naviguer('/admin/depenses');
       } else {
-        await creer('depenses', donnees, libelle, idDepense);
+        await creer('depenses_new', donnees, libelle, idDepense);
         notifier(`Dépense « ${donnees.designation} » enregistrée${donnees.montantPaye ? ` (${fcfa(donnees.montantPaye)} payés)` : ''}.`);
         if (ajouterAutre) {
           setF({ ...VIDE, date: f.date, posteId: f.posteId, responsable: f.responsable, financement: f.financement });

@@ -55,7 +55,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       fini();
     };
 
-    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'emprunts' | 'libelles', poser: (l: T[]) => void) => {
+    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses_new' | 'postes' | 'devis' | 'emprunts' | 'libelles', poser: (l: T[]) => void) => {
       let premier = true;
       const estOrdre = nom === 'postes' || nom === 'libelles';
       const champTri = estOrdre ? 'ordre' : 'date';
@@ -80,7 +80,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
     const arrets = [
       ecouter<Contribution>('contributions', setContributions),
       ecouter<Don>('dons', setDons),
-      ecouter<Depense>('depenses', setDepenses),
+      ecouter<Depense>('depenses_new', setDepenses),
       ecouter<Poste>('postes', setPostes),
       ecouter<Devis>('devis', setDevis),
       ecouter<Emprunt>('emprunts', setEmprunts),

@@ -85,6 +85,8 @@ export interface Justificatif {
 export interface Depense extends Trace {
   date: string;
   designation: string;
+  /** Référence au libellé (nouveau système). */
+  id_libelle?: string;
   /** Poste du budget auquel la dépense se rattache ('' = hors budget). */
   posteId?: string;
   /** Libellé du poste (copie, pour l'affichage et les exports). */

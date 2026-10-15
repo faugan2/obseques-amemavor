@@ -9,7 +9,7 @@ import { DEMO_CONTRIBUTIONS, DEMO_DEPENSES, DEMO_DONS } from './demo';
 import { cleNom } from './calculs';
 import initiales from './donneesInitiales.json';
 
-export type CollectionOperation = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'emprunts' | 'libelles' | 'budget';
+export type CollectionOperation = 'contributions' | 'dons' | 'depenses_new' | 'postes' | 'devis' | 'emprunts' | 'libelles' | 'budget';
 
 type Donnees = Record<string, unknown>;
 
@@ -198,7 +198,7 @@ export async function chargerDonneesDemo(): Promise<void> {
   if (!EST_DEMO) throw new Error("Les données de démonstration ne peuvent pas être chargées dans l'espace réel.");
   for (const c of DEMO_CONTRIBUTIONS) await creer('contributions', c as Partial<Contribution> as Donnees, `Participation · ${c.contributeur}`);
   for (const d of DEMO_DONS) await creer('dons', d as Partial<Don> as Donnees, `Don · ${d.donateur}`);
-  for (const d of DEMO_DEPENSES) await creer('depenses', d as Partial<Depense> as Donnees, `Dépense · ${d.designation}`);
+  for (const d of DEMO_DEPENSES) await creer('depenses_new', d as Partial<Depense> as Donnees, `Dépense · ${d.designation}`);
 }
 
 /**
