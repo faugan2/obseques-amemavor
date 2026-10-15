@@ -7,6 +7,7 @@ import { useDonnees } from '../lib/donnees';
 import { creer, modifier } from '../lib/operations';
 import { erreursParChamp, schemaPoste } from '../lib/validation';
 import { dateCourte, lireMontant, montant } from '../lib/format';
+import { IconeFlecheBas } from '../composants/icones';
 
 const VIDE = { libelle: '', prevision: '', responsable: '', financement: '', commentaire: '' };
 
@@ -14,10 +15,11 @@ const VIDE = { libelle: '', prevision: '', responsable: '', financement: '', com
 export default function FormPoste() {
   const { id } = useParams();
   const edition = Boolean(id);
-  const { postes, depenses, devis, budget, parametres, chargement } = useDonnees();
+  const { postes, depenses, devis, budget, parametres, libelles, chargement } = useDonnees();
   const existant = postes.find((p) => p.id === id);
   const naviguer = useNavigate();
   const notifier = useNotifier();
+  const libellesTries = [...libelles].sort((a, b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
 
   const [f, setF] = useState(VIDE);
   const [motifCorrection, setMotifCorrection] = useState('');
@@ -97,8 +99,16 @@ export default function FormPoste() {
         <form onSubmit={soumettre} noValidate className="flex min-w-0 flex-[999_1_520px] flex-col gap-5 rounded-[22px] bg-white p-5 shadow-flottante sm:p-7">
           <fieldset disabled={Boolean(fige)} className="flex flex-col gap-5">
             {erreurGenerale && <MessageErreur>{erreurGenerale}</MessageErreur>}
-            <Champ id="libelle" libelle="Nom du poste" erreur={erreurs.libelle}>
-              <input id="libelle" className={classes('champ', erreurs.libelle && 'champ-erreur')} placeholder="ex. Location de la grande tente" value={f.libelle} onChange={(e) => maj('libelle', e.target.value)} />
+            <Champ id="libelle" libelle="Libellé du poste" erreur={erreurs.libelle}>
+              <select
+                id="libelle"
+                className={classes('champ px-3', erreurs.libelle && 'champ-erreur')}
+                value={f.libelle}
+                onChange={(e) => maj('libelle', e.target.value)}
+              >
+                <option value="">Choisir un libellé…</option>
+                {libellesTries.map((l) => <option key={l.id} value={l.nom}>{l.nom}{l.description ? ` · ${l.description}` : ''}</option>)}
+              </select>
             </Champ>
             <Champ id="prevision" libelle="Montant prévu" facultatif erreur={erreurs.prevision} aide="Laisser vide si le poste n'est pas encore chiffré.">
               <div className="relative">
