@@ -168,7 +168,7 @@ export interface Libelle extends Trace {
 }
 
 /** Ligne de budget : montants prévisionnels pour un libellé. */
-export interface Budget extends Trace {
+export interface BudgetLigne extends Trace {
   id_libelle: string; // Référence au libellé
   responsable: string; // Responsable du poste
   financement: string; // Source de financement prévue

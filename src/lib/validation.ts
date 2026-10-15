@@ -105,7 +105,7 @@ export const schemaLibelle = z.object({
   ordre: z.number().int(),
 });
 
-export const schemaBudget = z.object({
+export const schemaBudgetLigne = z.object({
   id_libelle: requis(100, 'L\'ID du libellé est requis.'),
   responsable: texte(120),
   financement: texte(120),
