@@ -1,0 +1,27 @@
+# Types MIME corrects pour CSS et JavaScript
+<IfModule mod_mime.c>
+  AddType text/css .css
+  AddType application/javascript .js
+  AddType application/json .json
+</IfModule>
+
+# Configuration pour une SPA (Single Page Application)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /obseques-amemavor/
+
+  # Ne pas réécrire les fichiers et dossiers existants
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+
+  # Rediriger les routes inconnues vers index.html
+  RewriteRule . /obseques-amemavor/index.html [L]
+</IfModule>
+
+# Cache busting pour les assets avec hash dans le nom
+<FilesMatch "\.(js|css)$">
+  Header set Cache-Control "max-age=31536000, immutable"
+</FilesMatch>
+
+# Index par défaut
+DirectoryIndex index.html
