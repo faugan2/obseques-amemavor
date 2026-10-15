@@ -58,7 +58,7 @@ function Montant({ o }: { o: Operation }) {
 }
 
 export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) {
-  const { contributions, dons, depenses, synthese: s, budget: b, parametres } = useDonnees();
+  const { contributions, dons, depenses, emprunts, synthese: s, budget: b, parametres } = useDonnees();
   const [typeChoisi, setType] = useState<TypeOperation | 'tous'>('tous');
   const type = typeFixe ?? typeChoisi;
   const page = typeFixe ? PAGES[typeFixe] : null;
@@ -130,21 +130,36 @@ export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) 
       )}
 
       {!page && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
-          {[
-            { l: 'Solde en caisse', v: s.solde, d: 'Entrées − dépenses payées', c: s.solde < 0 ? 'text-depense' : 'text-recu' },
-            { l: 'Cotisations', v: s.totalCotisations, d: `${montant(s.cotisationsAttendues)} encore attendus`, c: 'text-recu' },
-            { l: 'Participations', v: s.totalParticipations, d: `${s.nbParticipants} participant${s.nbParticipants > 1 ? 's' : ''}`, c: 'text-[#1F4E8C]' },
-            { l: 'Dépenses payées', v: s.totalDepense, d: `${s.nbDepenses} dépense${s.nbDepenses > 1 ? 's' : ''}`, c: 'text-depense' },
-            { l: 'Reste à payer', v: s.resteAPayer, d: `${s.nbDepensesNonSoldees} non soldée${s.nbDepensesNonSoldees > 1 ? 's' : ''}`, c: 'text-attente' },
-            { l: 'Budget prévu', v: b.totalPrevision, d: `${b.lignes.length} postes · ${b.nbPostesNonChiffres} à chiffrer`, c: '' },
-          ].map((k) => (
-            <div key={k.l} className="flex flex-col gap-1 rounded-[18px] bg-white p-[18px] shadow-carte">
-              <div className="text-xs font-bold text-encre-pale">{k.l}</div>
-              <div className={classes('text-[26px] font-extrabold', k.c)}>{montant(k.v)}</div>
-              <div className="text-xs text-encre-pale">{k.d}</div>
-            </div>
-          ))}
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
+            {[
+              { l: 'Caisse reçue', v: s.totalEncaisse, d: 'Cotisations + Participations + Emprunts', c: 'text-recu' },
+              { l: 'Dépenses payées', v: s.totalDepense, d: `${s.nbDepenses} dépense${s.nbDepenses > 1 ? 's' : ''}`, c: 'text-depense' },
+              { l: 'Solde disponible', v: s.solde, d: 'Caisse − dépenses payées', c: s.solde < 0 ? 'text-depense' : 'text-recu' },
+              { l: 'Budget prévu', v: b.totalPrevision, d: `${b.lignes.length} postes · ${b.nbPostesNonChiffres} à chiffrer`, c: '' },
+            ].map((k) => (
+              <div key={k.l} className="flex flex-col gap-1 rounded-[18px] bg-white p-[18px] shadow-carte">
+                <div className="text-xs font-bold text-encre-pale">{k.l}</div>
+                <div className={classes('text-[26px] font-extrabold', k.c)}>{montant(k.v)}</div>
+                <div className="text-xs text-encre-pale">{k.d}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
+            {[
+              { l: 'Cotisations', v: s.totalCotisations, d: `${montant(s.cotisationsAttendues)} encore attendus`, c: 'text-recu' },
+              { l: 'Participations', v: s.totalParticipations, d: `${s.nbParticipants} participant${s.nbParticipants > 1 ? 's' : ''}`, c: 'text-[#1F4E8C]' },
+              { l: 'Emprunts', v: s.totalEmprunts, d: `${emprunts.filter(e => !e.annule).length} emprunt${emprunts.filter(e => !e.annule).length > 1 ? 's' : ''}`, c: 'text-encre' },
+              { l: 'Reste à payer', v: s.resteAPayer, d: `${s.nbDepensesNonSoldees} non soldée${s.nbDepensesNonSoldees > 1 ? 's' : ''}`, c: 'text-attente' },
+            ].map((k) => (
+              <div key={k.l} className="flex flex-col gap-1 rounded-[18px] bg-white p-[18px] shadow-carte">
+                <div className="text-xs font-bold text-encre-pale">{k.l}</div>
+                <div className={classes('text-[26px] font-extrabold', k.c)}>{montant(k.v)}</div>
+                <div className="text-xs text-encre-pale">{k.d}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
