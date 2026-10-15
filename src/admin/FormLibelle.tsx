@@ -78,11 +78,11 @@ export default function FormLibelle() {
         naviguer('/admin/libelles');
       } else {
         // Créer le libellé
-        const refLibelle = await creer('libelles', res.data, libelle);
+        const idLibelle = await creer('libelles', res.data, libelle);
 
         // Créer automatiquement une ligne de budget correspondante
         const budgetData = {
-          id_libelle: refLibelle.id,
+          id_libelle: idLibelle,
           responsable: '',
           financement: '',
           prevision: 0,
