@@ -18,7 +18,7 @@ export async function exporterExcel(
   const XLSX = await import('xlsx');
   const s = synthese(contributions, dons, depenses);
   // Utiliser budgetLignes si disponibles, sinon utiliser l'ancien budget()
-  const b = budgetLignes && libelles ? budgetDepuisLignes(budgetLignes, depenses) : budget(postes, depenses, devis);
+  const b = budgetLignes && libelles ? budgetDepuisLignes(budgetLignes, depenses, libelles) : budget(postes, depenses, devis);
   const genere = new Date().toLocaleString('fr-FR');
   const etat = (annule: boolean) => (annule ? 'Annulée' : '');
   const actives = <T extends { annule?: boolean }>(l: T[]) => l.filter((x) => !x.annule);

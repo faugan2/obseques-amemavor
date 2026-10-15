@@ -139,18 +139,23 @@ export interface Budget {
  * @param budgetLignes Lignes de budget avec id_libelle, responsable, financement, prevision, montantPaye
  * @param depenses Toutes les dépenses liées aux libellés via id_libelle
  */
-export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[]): Budget {
+export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], libelles: any[] = []): Budget {
   const d = actives(depenses);
+  const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle, l]));
+
   const lignes: LigneBudget[] = budgetLignes.map((bl) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
     const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
     const realise = somme(liees, (x) => x.montantPaye);
     const engage = somme(liees, (x) => x.montant);
 
+    // Chercher le nom du libellé dans la collection libelles
+    const libelleData = libellesMap.get(bl.id_libelle);
+
     return {
       poste: {
         id: bl.id_libelle,
-        libelle: bl.nom || '', // Sera ajusté si on a accès aux libelles
+        libelle: libelleData?.nom || bl.nom || '', // Utilise le nom du libellé si disponible
         prevision: bl.prevision,
         responsable: bl.responsable,
         financement: bl.financement,
