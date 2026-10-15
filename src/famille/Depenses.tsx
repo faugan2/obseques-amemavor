@@ -1,18 +1,11 @@
 import { useMemo, useState } from 'react';
 import { GabaritFamille } from './Gabarit';
-import { EtatVide, Puce, classes } from '../composants/ui';
+import { EtatVide } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
 import { dateCourte, montant } from '../lib/format';
 import type { Depense } from '../types';
 
 const PAR_PAGE = 20;
-
-function Etat({ d }: { d: Depense }) {
-  if (d.annule) return <Puce ton="annule">Annulée</Puce>;
-  if (d.montantPaye >= d.montant) return <Puce ton="recu">Payée</Puce>;
-  if (d.montantPaye > 0) return <Puce ton="attente">Partielle</Puce>;
-  return <Puce ton="attente">Prévue</Puce>;
-}
 
 export default function Depenses() {
   const { depenses, synthese: s } = useDonnees();
@@ -66,7 +59,6 @@ export default function Depenses() {
                     <th className="px-2.5 py-3 font-bold">Désignation</th>
                     <th className="px-2.5 py-3 font-bold">Responsable / Financement</th>
                     <th className="px-2.5 py-3 text-right font-bold">Montant</th>
-                    <th className="px-2.5 py-3 text-center font-bold">État</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -83,9 +75,6 @@ export default function Depenses() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-2.5 py-3.5 text-right text-sm font-extrabold text-depense">{montant(d.montantPaye)}</td>
-                      <td className="px-2.5 py-3.5 text-center">
-                        <Etat d={d} />
-                      </td>
                     </tr>
                   ))}
                 </tbody>
