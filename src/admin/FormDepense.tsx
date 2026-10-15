@@ -289,7 +289,7 @@ export default function FormDepense() {
           {edition && existante && !fige && (
             <div className="border-t border-trait pt-4">
               <BoutonSuppression
-                collection="depenses"
+                collection="depenses_new"
                 id={existante.id}
                 libelle={`Dépense · ${existante.designation}`}
                 donnees={existante as unknown as Record<string, unknown>}

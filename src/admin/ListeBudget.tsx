@@ -141,7 +141,7 @@ export default function ListeBudget() {
           { l: 'Budget total prévu', v: montant(budgetStats.totalPrevision), c: '' },
           { l: 'Engagé', v: montant(budgetStats.totalEngage), c: 'text-attente' },
           { l: 'Payé', v: montant(budgetStats.totalRealise), c: 'text-depense' },
-          { l: 'Reste à dépenser', v: montant(budgetStats.reste), c: 'text-recu' },
+          { l: 'Reste à dépenser', v: montant(Math.max(0, budgetStats.totalPrevision - budgetStats.totalEngage)), c: 'text-recu' },
         ].map((k) => (
           <div key={k.l} className="flex flex-col gap-1 rounded-[18px] bg-white p-[18px] shadow-carte">
             <div className="text-xs font-bold text-encre-pale">{k.l}</div>
@@ -215,7 +215,7 @@ export default function ListeBudget() {
                   <td className="px-5 py-3" colSpan={3}>Total</td>
                   <td className="px-2.5 py-3 text-right">{montant(budgetStats.totalPrevision)}</td>
                   <td className="px-2.5 py-3 text-right text-depense">{montant(budgetStats.totalRealise)}</td>
-                  <td className="px-2.5 py-3 text-right text-recu">{montant(budgetStats.reste)}</td>
+                  <td className="px-2.5 py-3 text-right text-recu">{montant(Math.max(0, budgetStats.totalPrevision - budgetStats.totalRealise))}</td>
                   <td />
                 </tr>
               </tfoot>

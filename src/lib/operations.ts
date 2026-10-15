@@ -218,7 +218,7 @@ export async function importerDonneesExcel(
     avancer();
   }
   for (const d of initiales.depenses) {
-    await creer('depenses', d as Donnees, `Dépense · ${d.designation} (import Excel)`);
+    await creer('depenses_new', d as Donnees, `Dépense · ${d.designation} (import Excel)`);
     avancer();
   }
   for (const c of initiales.contributions) {

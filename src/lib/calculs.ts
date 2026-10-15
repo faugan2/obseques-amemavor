@@ -135,30 +135,45 @@ export interface Budget {
   nbDepassements: number;
 }
 
-/** Calcule les stats du budget depuis les budgetLignes (nouvelle approche). */
+/** Calcule les stats du budget depuis les budgetLignes (nouvelle approche).
+ * @param budgetLignes Lignes de budget avec id_libelle, responsable, financement, prevision, montantPaye
+ * @param depenses Toutes les dépenses liées aux libellés via id_libelle
+ */
 export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[]): Budget {
   const d = actives(depenses);
   const lignes: LigneBudget[] = budgetLignes.map((bl) => {
-    // Récupérer les dépenses liées à ce libellé via id_libelle (dans la future implémentation)
-    // Pour maintenant, on affiche juste les données du budgetLigne
+    // Récupérer les dépenses liées à ce libellé via id_libelle
+    const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
+    const realise = somme(liees, (x) => x.montantPaye);
+    const engage = somme(liees, (x) => x.montant);
+
     return {
-      poste: { id: bl.id_libelle, libelle: '', prevision: 0, responsable: '', financement: '', commentaire: '', ordre: 0 } as Poste,
+      poste: {
+        id: bl.id_libelle,
+        libelle: bl.nom || '', // Sera ajusté si on a accès aux libelles
+        prevision: bl.prevision,
+        responsable: bl.responsable,
+        financement: bl.financement,
+        commentaire: bl.commentaire,
+        ordre: 0,
+      } as Poste,
       prevision: bl.prevision,
-      realise: bl.montantPaye,
-      engage: bl.montantPaye, // À améliorer quand on aura les dépenses liées
-      resteAPayer: (bl.prevision || 0) - (bl.montantPaye || 0),
-      ecart: (bl.prevision || 0) - (bl.montantPaye || 0),
-      nbDepenses: 0, // À améliorer
-      devisRetenu: null,
+      realise,
+      engage,
+      resteAPayer: engage - realise,
+      ecart: (bl.prevision || 0) - engage,
+      nbDepenses: liees.length,
+      devisRetenu: null, // À améliorer si on a les devis
     };
   });
 
+  const hors = d.filter((x) => !x.id_libelle);
   return {
     lignes,
     totalPrevision: somme(lignes, (l) => l.prevision),
-    totalRealise: somme(lignes, (l) => l.realise),
-    totalEngage: somme(lignes, (l) => l.engage),
-    horsBudget: { realise: 0, engage: 0, nb: 0 },
+    totalRealise: somme(lignes, (l) => l.realise) + somme(hors, (x) => x.montantPaye),
+    totalEngage: somme(lignes, (l) => l.engage) + somme(hors, (x) => x.montant),
+    horsBudget: { realise: somme(hors, (x) => x.montantPaye), engage: somme(hors, (x) => x.montant), nb: hors.length },
     nbPostesNonChiffres: lignes.filter((l) => l.prevision === 0).length,
     nbDepassements: lignes.filter((l) => l.prevision > 0 && l.engage > l.prevision).length,
   };
