@@ -60,13 +60,6 @@ export default function Depenses() {
   const aPayer = depenses.filter((d) => !d.annule && d.statut !== 'payee');
   const engage = s.totalDepense + s.resteAPayer;
   const pctPaye = engage ? Math.round((s.totalDepense / engage) * 100) : 0;
-  const parSource = new Map<string, number>();
-  for (const d of depenses) {
-    if (d.annule || d.montantPaye <= 0) continue;
-    const cle = d.financement || 'Caisse des obsèques';
-    parSource.set(cle, (parSource.get(cle) ?? 0) + d.montantPaye);
-  }
-  const sources = [...parSource.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
     <GabaritFamille
@@ -88,19 +81,6 @@ export default function Depenses() {
         </div>
       </section>
 
-      {sources.length > 0 && (
-        <section className="carte flex flex-col gap-3 p-5 sm:px-6">
-          <h2 className="font-titre text-[22px] font-normal">Par source de financement</h2>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-            {sources.map(([source, total]) => (
-              <div key={source} className="flex flex-col rounded-xl bg-[#F7F8F5] px-4 py-3">
-                <span className="text-[13px] font-semibold text-encre-douce">{source}</span>
-                <span className="text-lg font-extrabold text-depense">{montant(total)} FCFA</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-titre text-2xl font-normal">À payer</h2>
