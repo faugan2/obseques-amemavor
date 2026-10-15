@@ -5,6 +5,11 @@ import { useDonnees } from '../lib/donnees';
 /** Administration des libellés. */
 export function ListeLibelles() {
   const { libelles, parametres } = useDonnees();
+
+  console.log('📊 ListeLibelles rendu');
+  console.log(`📦 Nombre de libellés reçus: ${libelles.length}`);
+  console.log('📋 Libellés:', libelles);
+
   const liste = [...libelles].sort((a, b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
 
   return (

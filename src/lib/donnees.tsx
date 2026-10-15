@@ -53,13 +53,21 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
       fini();
     };
 
-    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis', poser: (l: T[]) => void) => {
+    const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'emprunts' | 'libelles', poser: (l: T[]) => void) => {
       let premier = true;
+      const estOrdre = nom === 'postes' || nom === 'libelles';
+      const champTri = estOrdre ? 'ordre' : 'date';
+      const sensTri = estOrdre ? 'asc' : 'desc';
+
+      console.log(`📂 Chargement de ${nom} depuis ${nomCollection(nom)}...`);
+
       return db
         .collection(nomCollection(nom))
-        .orderBy(nom === 'postes' ? 'ordre' : 'date', nom === 'postes' ? 'asc' : 'desc')
+        .orderBy(champTri, sensTri)
         .onSnapshot((snap) => {
-          poser(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T));
+          const donnees = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T);
+          console.log(`✅ ${nom}: ${donnees.length} éléments chargés`);
+          poser(donnees);
           if (premier) {
             premier = false;
             fini();
