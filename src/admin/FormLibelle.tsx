@@ -80,18 +80,18 @@ export default function FormLibelle() {
         // Créer le libellé
         await creer('libelles', res.data, libelle);
 
-        // Créer automatiquement un poste correspondant
-        const posteData = {
-          libelle: res.data.nom,
-          prevision: 0,
+        // Créer automatiquement une ligne de budget correspondante
+        const budgetData = {
+          id_libelle: '', // Sera défini lors de la liaison avec le libellé
           responsable: '',
           financement: '',
+          prevision: 0,
+          montantPaye: 0,
           commentaire: `Créé automatiquement pour le libellé "${res.data.nom}"`,
-          ordre: res.data.ordre,
         };
-        await creer('postes', posteData, `Poste · ${res.data.nom}`);
+        await creer('budget', budgetData, `Budget · ${res.data.nom}`);
 
-        notifier(`✅ Libellé « ${res.data.nom} » créé + Poste ajouté au budget`);
+        notifier(`✅ Libellé « ${res.data.nom} » créé + Ligne de budget ajoutée`);
         if (ajouterAutre) {
           setF({ ...VIDE, ordre: String(ordreVal + 10) });
         } else naviguer('/admin/libelles');
