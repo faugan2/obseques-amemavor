@@ -1,14 +1,45 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GabaritAdmin } from './Gabarit';
-import { EtatVide, classes } from '../composants/ui';
+import { EtatVide, Chargement, classes, useNotifier } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
+import { creer } from '../lib/operations';
 import { montant, pourRecherche } from '../lib/format';
 
 /** Administration du budget : lignes de budget par libellé. */
 export default function ListeBudget() {
   const { budgetLignes, libelles, parametres, budget: budgetStats } = useDonnees();
   const [recherche, setRecherche] = useState('');
+  const [syncEnCours, setSyncEnCours] = useState(false);
+  const notifier = useNotifier();
+
+  // Synchroniser: créer les lignes de budget manquantes
+  const synchroniser = async () => {
+    setSyncEnCours(true);
+    try {
+      let creees = 0;
+      for (const lib of libelles) {
+        const existe = budgetLignes.some((bl) => bl.id_libelle === lib.id);
+        if (!existe) {
+          const budgetData = {
+            id_libelle: lib.id,
+            responsable: '',
+            financement: '',
+            prevision: 0,
+            montantPaye: 0,
+            commentaire: `Créé automatiquement pour le libellé "${lib.nom}"`,
+          };
+          await creer('budget', budgetData, `Budget · ${lib.nom}`);
+          creees++;
+        }
+      }
+      notifier(`✅ ${creees} ligne${creees > 1 ? 's' : ''} de budget créée${creees > 1 ? 's' : ''}`);
+    } catch (e) {
+      notifier(`❌ Erreur: ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
+    } finally {
+      setSyncEnCours(false);
+    }
+  };
 
   // Joindre les lignes de budget avec les libellés
   const lignes = useMemo(() => {
@@ -28,16 +59,29 @@ export default function ListeBudget() {
       .sort((a, b) => (a.libelle?.ordre || 0) - (b.libelle?.ordre || 0));
   }, [budgetLignes, libelles, recherche]);
 
+  const manquantes = libelles.filter((lib) => !budgetLignes.some((bl) => bl.id_libelle === lib.id)).length;
+
   return (
     <GabaritAdmin
       titre="Budget"
       sousTitre="Montants prévisionnels et réalisés par libellé."
       actions={
-        !parametres.cloture && (
-          <Link to="/admin/libelles" className="inline-flex min-h-[46px] items-center rounded-xl bg-foret px-5 text-sm font-extrabold text-white no-underline">
-            + Nouveau libellé
-          </Link>
-        )
+        <div className="flex gap-3">
+          {manquantes > 0 && (
+            <button
+              onClick={() => void synchroniser()}
+              disabled={syncEnCours}
+              className="inline-flex min-h-[46px] items-center rounded-xl bg-attente px-5 text-sm font-extrabold text-white no-underline hover:opacity-90 disabled:opacity-50"
+            >
+              {syncEnCours ? <Chargement /> : `Créer ${manquantes} ligne${manquantes > 1 ? 's' : ''}`}
+            </button>
+          )}
+          {!parametres.cloture && (
+            <Link to="/admin/libelles" className="inline-flex min-h-[46px] items-center rounded-xl bg-foret px-5 text-sm font-extrabold text-white no-underline">
+              + Nouveau libellé
+            </Link>
+          )}
+        </div>
       }
     >
       <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3.5">
