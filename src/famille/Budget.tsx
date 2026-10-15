@@ -122,7 +122,7 @@ export default function Budget() {
         ) : (
           <ul>
             {lignes.map((l, i) => {
-              const deps = depenses.filter((d) => !d.annule && d.posteId === l.poste.id);
+              const deps = depenses.filter((d) => !d.annule && (d.id_libelle === l.poste.id || d.posteId === l.poste.id));
               const nbDevis = devis.filter((v) => !v.annule && v.posteId === l.poste.id).length;
               return (
                 <li key={l.poste.id} className={classes(i > 0 && 'border-t border-trait')}>
