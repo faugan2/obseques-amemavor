@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { GabaritAdmin } from './Gabarit';
-import { BoutonSuppression, BoutonsEnregistrer, MotifCorrection, messageEcriture } from './communs';
+import { BandeauFige, BoutonSuppression, BoutonsEnregistrer, MotifCorrection, messageEcriture } from './communs';
 import { Champ, Chargement, MessageErreur, useNotifier } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
 import { creer, modifier } from '../lib/operations';
 import { erreursParChamp, schemaEmprunt } from '../lib/validation';
-import { aujourdHui, fcfa, lireMontant, montant } from '../lib/format';
-import { MODES_PAIEMENT, STATUTS_EMPRUNT, type Emprunt, type ModePaiement, type StatutEmprunt } from '../types';
+import { aujourdHui, fcfa, lireMontant } from '../lib/format';
+import { MODES_PAIEMENT, STATUTS_EMPRUNT, type ModePaiement, type StatutEmprunt } from '../types';
 import { useNavigate, useParams } from 'react-router-dom';
 
 type Etat = {
@@ -69,13 +69,13 @@ export default function FormEmprunt() {
 
   const montantVal = lireMontant(f.montant);
   const rembourseVal = lireMontant(f.montantRembourse);
-  const variation = (rembourseVal - (existant ? existant.montantRembourse : 0));
+  
   const fige = edition && existant && (existant.annule || parametres.cloture);
 
   if (chargement) return <GabaritAdmin titre="Emprunt"><Chargement /></GabaritAdmin>;
   if (edition && !existant) return <GabaritAdmin titre="Emprunt"><MessageErreur>Cet emprunt est introuvable.</MessageErreur></GabaritAdmin>;
 
-  const enregistrer = async (ajouterAutre: boolean) => {
+  const enregistrer = async () => {
     setErreurGenerale('');
     const donnees = {
       preteur: f.preteur.trim().replace(/\s+/g, ' '),
@@ -105,7 +105,7 @@ export default function FormEmprunt() {
       } else {
         await creer('emprunts', res.data, libelle);
         notifier(`Emprunt de ${res.data.preteur} enregistré (${fcfa(res.data.montant)}).`);
-        if (ajouterAutre) {
+        if (false) {
           setF({ ...VIDE, date: f.date });
         } else naviguer('/admin/emprunts');
       }
@@ -118,7 +118,7 @@ export default function FormEmprunt() {
 
   const soumettre = (e: FormEvent) => {
     e.preventDefault();
-    void enregistrer(false);
+    void enregistrer();
   };
 
   return (
@@ -254,7 +254,7 @@ export default function FormEmprunt() {
             edition={edition}
             couleur="bg-recu"
             libelle="Enregistrer l'emprunt"
-            onAutre={() => void enregistrer(true)}
+            onAutre={() => void enregistrer()}
           />
         </form>
 

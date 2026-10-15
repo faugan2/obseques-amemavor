@@ -56,7 +56,6 @@ export default function FormDevis() {
 
   const maj = <K extends keyof typeof VIDE>(k: K, v: (typeof VIDE)[K]) => setF((x) => ({ ...x, [k]: v }));
   const fige = edition && existant && (existant.annule || parametres.cloture);
-  const libelle = libelles.find((l) => l.id === f.posteId);
 
   if (chargement) return <GabaritAdmin titre="Devis"><Chargement /></GabaritAdmin>;
   if (edition && !existant) return <GabaritAdmin titre="Devis"><MessageErreur>Ce devis est introuvable.</MessageErreur></GabaritAdmin>;

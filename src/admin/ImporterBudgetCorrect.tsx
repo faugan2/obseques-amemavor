@@ -59,7 +59,7 @@ const BUDGETS_A_IMPORTER = [
 ];
 
 export default function ImporterBudgetCorrect() {
-  const { libelles, chargement } = useDonnees();
+  const { chargement } = useDonnees();
   const notifier = useNotifier();
   const [importEnCours, setImportEnCours] = useState(false);
   const [erreur, setErreur] = useState('');

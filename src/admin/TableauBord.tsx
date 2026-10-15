@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GabaritAdmin } from './Gabarit';
-import { Puce, classes } from '../composants/ui';
+import { classes } from '../composants/ui';
 import { IconeAlerte, IconeHorloge, IconeDocument } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
-import { statutContribution, toutesOperations, type Operation, type TypeOperation } from '../lib/calculs';
+import { toutesOperations, type Operation, type TypeOperation } from '../lib/calculs';
 import { dateCourte, montant, pourRecherche } from '../lib/format';
-import type { Contribution, Depense, Don } from '../types';
+import type { Contribution, Depense } from '../types';
 
 const PAR_PAGE = 20;
 
@@ -24,20 +24,6 @@ const PAGES: Record<TypeOperation, { titre: string; sousTitre: string; nouveau: 
   don: { titre: 'Participations en nature', sousTitre: 'Biens et services offerts (boissons, riz, chaises…).', nouveau: '+ Participation en nature', vers: '/admin/don/nouveau', couleur: 'bg-nature' },
   depense: { titre: 'Dépenses', sousTitre: 'Chaque dépense est rattachée à un poste du budget.', nouveau: '+ Nouvelle dépense', vers: '/admin/depense/nouvelle', couleur: 'bg-depense' },
 };
-
-function Statut({ o }: { o: Operation }) {
-  if (o.annule) return <Puce ton="annule">Annulée</Puce>;
-  if (o.type === 'cotisation' || o.type === 'participation') {
-    const s = statutContribution(o.source as Contribution);
-    return s === 'recue' ? <Puce ton="recu">Reçue</Puce> : s === 'partielle' ? <Puce ton="attente">Partielle</Puce> : <Puce ton="attente">Promise</Puce>;
-  }
-  if (o.type === 'don') {
-    const s = (o.source as Don).statut;
-    return <Puce ton="nature">{s === 'recu' ? 'Reçu' : s === 'partiel' ? 'Partiel' : 'Annoncé'}</Puce>;
-  }
-  const s = (o.source as Depense).statut;
-  return s === 'payee' ? <Puce ton="recu">Payée</Puce> : s === 'partielle' ? <Puce ton="attente">Partielle</Puce> : <Puce ton="attente">Prévue</Puce>;
-}
 
 function Montant({ o }: { o: Operation }) {
   if (o.type === 'don') return <span className="text-encre-pale">—</span>;

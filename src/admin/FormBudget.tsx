@@ -7,7 +7,6 @@ import { useDonnees } from '../lib/donnees';
 import { modifier } from '../lib/operations';
 import { erreursParChamp, schemaBudgetLigne } from '../lib/validation';
 import { montant } from '../lib/format';
-import type { BudgetLigne } from '../types';
 
 type Etat = {
   prevision: string;
@@ -52,6 +51,8 @@ export default function FormBudget() {
         responsable: existant.responsable,
         financement: existant.financement,
         commentaire: existant.commentaire,
+        ajoutResponsable: false,
+        ajoutFinancement: false,
       });
       setInitialise(true);
     }
@@ -67,7 +68,7 @@ export default function FormBudget() {
   if (chargement) return <GabaritAdmin titre="Ligne de budget"><Chargement /></GabaritAdmin>;
   if (!existant) return <GabaritAdmin titre="Ligne de budget"><MessageErreur>Cette ligne de budget est introuvable.</MessageErreur></GabaritAdmin>;
 
-  const enregistrer = async (ajouterAutre: boolean) => {
+  const enregistrer = async () => {
     setErreurGenerale('');
     const donnees = {
       id_libelle: existant.id_libelle,
@@ -98,7 +99,7 @@ export default function FormBudget() {
 
   const soumettre = (e: FormEvent) => {
     e.preventDefault();
-    void enregistrer(false);
+    void enregistrer();
   };
 
   return (

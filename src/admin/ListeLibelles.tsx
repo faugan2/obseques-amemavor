@@ -7,7 +7,7 @@ const ELEMENTS_PAR_PAGE = 20;
 
 /** Administration des libellés. */
 export function ListeLibelles() {
-  const { libelles, parametres } = useDonnees();
+  const { libelles } = useDonnees();
   const [recherche, setRecherche] = useState('');
   const [page, setPage] = useState(0);
 

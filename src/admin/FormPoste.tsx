@@ -7,7 +7,6 @@ import { useDonnees } from '../lib/donnees';
 import { creer, modifier } from '../lib/operations';
 import { erreursParChamp, schemaPoste } from '../lib/validation';
 import { dateCourte, lireMontant, montant } from '../lib/format';
-import { IconeFlecheBas } from '../composants/icones';
 
 const VIDE = { libelle: '', prevision: '', responsable: '', financement: '', commentaire: '' };
 

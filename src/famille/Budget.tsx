@@ -7,7 +7,6 @@ import type { LigneBudget } from '../lib/calculs';
 import type { Depense, Contribution, Emprunt } from '../types';
 import { montant, pourRecherche, dateLongue } from '../lib/format';
 
-type Filtre = 'tous' | 'engages' | 'non-chiffres' | 'depassements';
 const PAR_PAGE = 20;
 
 function Etat({ l }: { l: LigneBudget }) {
@@ -82,7 +81,7 @@ function ModalCaisse({ contributions, emprunts = [], onClose }: { contributions:
                 {empruntsActifs.map((e) => (
                   <div key={e.id} className="flex flex-wrap justify-between gap-2 text-sm bg-[#F7F8F5] p-2 rounded">
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold">{e.prêteur}</div>
+                      <div className="font-semibold">{e.preteur}</div>
                       {e.commentaire && <div className="text-xs text-encre-pale">{e.commentaire}</div>}
                     </div>
                     <span className="font-bold text-recu whitespace-nowrap">{montant(e.montant)}</span>
@@ -224,7 +223,6 @@ function ModalHistorique({ libelle, id_libelle, depenses, onClose }: { libelle: 
 
 export default function Budget() {
   const { budget: b, depenses, contributions, emprunts, synthese: s } = useDonnees();
-  const [filtre, setFiltre] = useState<Filtre>('tous');
   const [recherche, setRecherche] = useState('');
   const [numPage, setPage] = useState(0);
   const [libelleSelectionnee, setLibelleSelectionnee] = useState<{ id: string; nom: string } | null>(null);
@@ -233,26 +231,11 @@ export default function Budget() {
   const lignes = useMemo(() => {
     const q = pourRecherche(recherche);
     return b.lignes
-      .filter(
-        (l) =>
-          (filtre === 'tous' ||
-            (filtre === 'engages' && l.engage > 0) ||
-            (filtre === 'non-chiffres' && l.prevision === 0) ||
-            (filtre === 'depassements' && l.prevision > 0 && l.engage > l.prevision)) &&
-          (!q || pourRecherche(`${l.poste.libelle} ${l.poste.responsable} ${l.poste.financement}`).includes(q)),
-      )
+      .filter((l) => !q || pourRecherche(`${l.poste.libelle} ${l.poste.responsable} ${l.poste.financement}`).includes(q))
       .sort((a, b) => b.prevision - a.prevision); // Tri décroissant par montant prévu
-  }, [b.lignes, filtre, recherche]);
+  }, [b.lignes, recherche]);
 
   const pct = b.totalPrevision ? Math.min(100, Math.round((b.totalEngage / b.totalPrevision) * 100)) : 0;
-  const besoin = b.totalPrevision - s.totalEncaisse;
-
-  const FILTRES: { v: Filtre; l: string; n: number }[] = [
-    { v: 'tous', l: 'Tous', n: b.lignes.length },
-    { v: 'engages', l: 'Engagés', n: b.lignes.filter((l) => l.engage > 0).length },
-    { v: 'non-chiffres', l: 'À chiffrer', n: b.nbPostesNonChiffres },
-    { v: 'depassements', l: 'Dépassements', n: b.nbDepassements },
-  ];
 
   const nbPages = Math.max(1, Math.ceil(lignes.length / PAR_PAGE));
   const pageCourante = Math.min(numPage, nbPages - 1);

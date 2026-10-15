@@ -155,7 +155,7 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
   const d = actives(dAvecLibelle);
   const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
 
-  const lignes: LigneBudget[] = budgetLignes.map((bl, idx) => {
+  const lignes: LigneBudget[] = budgetLignes.map((bl) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
     const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
     const realise = somme(liees, (x) => x.montantPaye);

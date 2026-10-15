@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { GabaritAdmin } from './Gabarit';
-import { Chargement, MessageErreur, useNotifier } from '../composants/ui';
+import { Chargement, useNotifier } from '../composants/ui';
 import { useDonnees } from '../lib/donnees';
 import { creer } from '../lib/operations';
-import { IconeFlecheBas } from '../composants/icones';
 
 // Les 50 libellés du CSV (nouveaux, sans doublons)
 const LIBELLES_A_IMPORTER = [

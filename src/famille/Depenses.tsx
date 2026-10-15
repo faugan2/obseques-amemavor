@@ -4,7 +4,6 @@ import { EtatVide } from '../composants/ui';
 import { IconeRecherche } from '../composants/icones';
 import { useDonnees } from '../lib/donnees';
 import { dateCourte, montant, pourRecherche } from '../lib/format';
-import type { Depense } from '../types';
 
 const PAR_PAGE = 20;
 

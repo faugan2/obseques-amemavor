@@ -101,7 +101,6 @@ export default function FormDepense() {
   if (edition && !existante) return <GabaritAdmin titre="Dépense"><MessageErreur>Cette dépense est introuvable.</MessageErreur></GabaritAdmin>;
 
   const libelleChoisi = libelles.find((l) => l.id === f.posteId);
-  const budgetLigneChoisi = budgetLignes.find((bl) => bl.id_libelle === f.posteId);
   const categorie = libelleChoisi?.nom || '';
   const total = lireMontant(f.montant);
   const paye = f.statut === 'payee' ? total : f.statut === 'prevue' ? 0 : lireMontant(f.dejaPaye);
@@ -192,7 +191,6 @@ export default function FormDepense() {
                   className={classes('champ px-3', erreurs.categorie && 'champ-erreur')}
                   value={f.posteId}
                   onChange={(e) => {
-                    const lib = libelles.find((l) => l.id === e.target.value);
                     const budgetLigne = budgetLignes.find((bl) => bl.id_libelle === e.target.value);
                     setF((x) => ({
                       ...x,

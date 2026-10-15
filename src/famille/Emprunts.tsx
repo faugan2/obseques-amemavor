@@ -79,7 +79,7 @@ export default function Emprunts() {
                       <tr key={e.id} className={i > 0 ? 'border-t border-trait' : ''}>
                         <td className="whitespace-nowrap px-5 py-3.5 text-sm text-encre-douce">{dateCourte(e.date)}</td>
                         <td className="px-2.5 py-3.5">
-                          <div className="font-bold text-sm">{e.prêteur}</div>
+                          <div className="font-bold text-sm">{e.preteur}</div>
                           {e.commentaire && <div className="text-xs text-encre-pale">{e.commentaire}</div>}
                         </td>
                         <td className="whitespace-nowrap px-2.5 py-3.5 text-right text-sm font-bold">{montant(e.montant)}</td>

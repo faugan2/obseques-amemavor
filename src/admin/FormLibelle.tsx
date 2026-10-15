@@ -6,8 +6,6 @@ import { Champ, Chargement, MessageErreur, useNotifier } from '../composants/ui'
 import { useDonnees } from '../lib/donnees';
 import { creer, modifier } from '../lib/operations';
 import { erreursParChamp, schemaLibelle } from '../lib/validation';
-import { aujourdHui, fcfa } from '../lib/format';
-import type { Libelle } from '../types';
 
 type Etat = {
   nom: string;

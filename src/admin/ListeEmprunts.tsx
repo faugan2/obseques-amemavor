@@ -6,7 +6,7 @@ import { STATUTS_EMPRUNT } from '../types';
 
 /** Administration des emprunts. */
 export function ListeEmprunts() {
-  const { emprunts, parametres } = useDonnees();
+  const { emprunts } = useDonnees();
   const liste = [...emprunts].sort((a, b) => a.date.localeCompare(b.date) || a.preteur.localeCompare(b.preteur));
 
   return (
