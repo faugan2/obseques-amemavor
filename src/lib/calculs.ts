@@ -143,6 +143,12 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
   const d = actives(depenses);
   const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
 
+  console.log('🔍 Dépenses actives:');
+  d.slice(0, 3).forEach((dep, i) => {
+    console.log(`   [${i}] designation="${dep.designation}", id_libelle="${dep.id_libelle}", posteId="${dep.posteId}", montant=${dep.montant}, montantPaye=${dep.montantPaye}`);
+  });
+  console.log('   ... total:', d.length, 'dépenses');
+
   const lignes: LigneBudget[] = budgetLignes.map((bl, idx) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
     const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
