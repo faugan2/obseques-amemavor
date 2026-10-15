@@ -48,8 +48,7 @@ export default function Accueil() {
               </div>
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-              <span>Engagé : <strong>{montant(b.totalEngage)}</strong></span>
-              <span>Payé : <strong className="text-depense">{montant(b.totalRealise)}</strong></span>
+              <span>Dépenses : <strong className="text-depense">{montant(b.totalRealise)}</strong></span>
               <span>Reste à financer : <strong className="text-attente">{montant(Math.max(0, b.totalPrevision - s.totalEncaisse))}</strong></span>
             </div>
           </div>
