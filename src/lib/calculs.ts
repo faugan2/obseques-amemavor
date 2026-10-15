@@ -143,7 +143,7 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
   const d = actives(depenses);
   const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
 
-  const lignes: LigneBudget[] = budgetLignes.map((bl) => {
+  const lignes: LigneBudget[] = budgetLignes.map((bl, idx) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
     const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
     const realise = somme(liees, (x) => x.montantPaye);
@@ -152,6 +152,10 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
     // Chercher le nom du libellé dans la collection libelles
     const libelleData = libellesMap.get(bl.id_libelle);
     const nomFinal = libelleData?.nom || bl.nom || '';
+
+    if (idx < 5) {
+      console.log(`📊 Ligne [${idx}] "${nomFinal}": id_libelle="${bl.id_libelle}", dépenses trouvées=${liees.length}, realise=${realise}, engage=${engage}`);
+    }
 
     return {
       poste: {
