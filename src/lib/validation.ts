@@ -105,6 +105,15 @@ export const schemaLibelle = z.object({
   ordre: z.number().int(),
 });
 
+export const schemaBudget = z.object({
+  id_libelle: requis(100, 'L\'ID du libellé est requis.'),
+  responsable: texte(120),
+  financement: texte(120),
+  prevision: entier('Saisissez un montant en FCFA (nombre entier).'),
+  montantPaye: entier('Saisissez un montant en FCFA (nombre entier).'),
+  commentaire: texte(1000),
+});
+
 /** Transforme les erreurs zod en { champ: message }. */
 export function erreursParChamp(e: z.ZodError): Record<string, string> {
   const r: Record<string, string> = {};

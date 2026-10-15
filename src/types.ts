@@ -167,6 +167,16 @@ export interface Libelle extends Trace {
   ordre: number; // Ordre d'affichage
 }
 
+/** Ligne de budget : montants prévisionnels pour un libellé. */
+export interface Budget extends Trace {
+  id_libelle: string; // Référence au libellé
+  responsable: string; // Responsable du poste
+  financement: string; // Source de financement prévue
+  prevision: number; // Montant prévu (0 si non chiffré)
+  montantPaye: number; // Montant total payé pour ce libellé
+  commentaire: string; // Notes
+}
+
 /** Une cérémonie du programme des obsèques (affichée jusqu'à sa date incluse). */
 export interface Ceremonie {
   date: string; // AAAA-MM-JJ
