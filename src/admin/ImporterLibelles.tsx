@@ -104,11 +104,11 @@ export default function ImporterLibelles() {
           ordre: (deja.length + i + 1) * 10,
         };
         // Créer le libellé
-        await creer('libelles', donnees, `Libellé · ${nom}`);
+        const refLibelle = await creer('libelles', donnees, `Libellé · ${nom}`);
 
         // Créer automatiquement la ligne de budget correspondante
         const budgetData = {
-          id_libelle: '',
+          id_libelle: refLibelle.id,
           responsable: '',
           financement: '',
           prevision: 0,
