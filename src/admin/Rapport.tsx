@@ -12,7 +12,7 @@ const th = 'border-b-[1.5px] border-encre px-1.5 py-2 text-left font-bold';
 const td = 'border-b border-[#C9CDC4] px-1.5 py-2 align-top';
 
 export default function Rapport() {
-  const { contributions, dons, depenses, postes, devis, synthese: s, budget: b, parametres } = useDonnees();
+  const { contributions, dons, depenses, postes, devis, synthese: s, budget: b, parametres, libelles, budgetLignes } = useDonnees();
   const [erreur, setErreur] = useState('');
   const [export_, setExport] = useState(false);
 
@@ -33,7 +33,8 @@ export default function Rapport() {
     setErreur('');
     setExport(true);
     try {
-      await exporterExcel(contributions, dons, depenses, postes, parametres.nomDefunt, devis);
+      // Passer budgetLignes et libelles pour utiliser les nouvelles collections
+      await exporterExcel(contributions, dons, depenses, postes, parametres.nomDefunt, devis, budgetLignes, libelles);
     } catch {
       setErreur("Le fichier Excel n'a pas pu être généré.");
     } finally {

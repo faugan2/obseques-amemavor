@@ -1,7 +1,7 @@
 // Exports : fichier Excel (rapport) et sauvegarde complète (JSON).
 import { db } from './firebase';
 import { ESPACE, nomCollection, type NomCollection } from './espace';
-import { budget, cotisationsParGroupe, synthese, typeDe } from './calculs';
+import { budget, budgetDepuisLignes, cotisationsParGroupe, synthese, typeDe } from './calculs';
 import { libelleMode } from './format';
 import type { Contribution, Depense, Devis, Don, Poste } from '../types';
 
@@ -9,13 +9,16 @@ export async function exporterExcel(
   contributions: Contribution[],
   dons: Don[],
   depenses: Depense[],
-  postes: Poste[],
+  postes: Poste[], // Garder pour compatibilité backwards
   nomDefunt: string,
   devis: Devis[] = [],
+  budgetLignes?: any[], // Nouvelles données: libelles du budget
+  libelles?: any[], // Noms des libelles
 ): Promise<void> {
   const XLSX = await import('xlsx');
   const s = synthese(contributions, dons, depenses);
-  const b = budget(postes, depenses, devis);
+  // Utiliser budgetLignes si disponibles, sinon utiliser l'ancien budget()
+  const b = budgetLignes && libelles ? budgetDepuisLignes(budgetLignes, depenses) : budget(postes, depenses, devis);
   const genere = new Date().toLocaleString('fr-FR');
   const etat = (annule: boolean) => (annule ? 'Annulée' : '');
   const actives = <T extends { annule?: boolean }>(l: T[]) => l.filter((x) => !x.annule);
