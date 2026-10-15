@@ -144,22 +144,6 @@ export default function Budget() {
               className="min-h-[44px] w-full rounded-full border border-[#D8DBD3] bg-[#F7F8F5] pl-11 pr-4 text-sm outline-none focus:border-recu"
             />
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer les postes">
-            {FILTRES.map((f) => (
-              <button
-                key={f.v}
-                type="button"
-                aria-pressed={filtre === f.v}
-                onClick={() => {
-                  setFiltre(f.v);
-                  setPage(0);
-                }}
-                className={classes('min-h-[40px] rounded-full px-3.5 text-[13px]', filtre === f.v ? 'bg-encre font-bold text-white' : 'border border-[#D8DBD3] bg-white font-semibold')}
-              >
-                {f.l} · {f.n}
-              </button>
-            ))}
-          </div>
         </div>
 
         {lignes.length === 0 ? (
