@@ -22,6 +22,7 @@ import {
 const MENU = [
   { vers: '/admin', libelle: 'Tableau de bord', icone: IconeTableau, fin: true },
   { vers: '/admin/libelles', libelle: 'Libellés', icone: IconeDocument },
+  { vers: '/admin/importer-libelles', libelle: 'Importer les libellés', icone: IconeFlecheBas },
   { vers: '/admin/budget', libelle: 'Budget', icone: IconeBudget },
   { vers: '/admin/cotisations', libelle: 'Cotisations', icone: IconePersonnes },
   { vers: '/admin/participations', libelle: 'Participations en argent', icone: IconeCoeur },
