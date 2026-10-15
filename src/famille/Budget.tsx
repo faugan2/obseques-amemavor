@@ -104,15 +104,17 @@ export default function Budget() {
       <section className="flex flex-col gap-4 rounded-[22px] bg-white p-6 shadow-flottante">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4">
           {[
-            { l: 'Budget prévu', v: b.totalPrevision, c: '' },
-            { l: 'Payé', v: b.totalRealise, c: 'text-depense' },
-            { l: besoin > 0 ? 'Reste à financer' : 'Excédent prévu', v: Math.abs(besoin), c: besoin > 0 ? 'text-depense-fonce' : 'text-recu' },
+            { l: 'Caisse reçue', v: s.totalEncaisse, c: 'text-recu', desc: 'Cotisations + Participations' },
+            { l: 'Budget prévu', v: b.totalPrevision, c: '', desc: 'Total prévisionnel' },
+            { l: 'Montant payé', v: b.totalRealise, c: 'text-depense', desc: 'Dépenses réglées' },
+            { l: s.solde >= 0 ? 'Solde caisse' : 'Déficit', v: Math.abs(s.solde), c: s.solde >= 0 ? 'text-recu' : 'text-depense-fonce', desc: s.solde >= 0 ? 'Caisse − Payé' : 'Payé − Caisse' },
           ].map((k) => (
             <div key={k.l}>
               <div className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">{k.l}</div>
               <div className={classes('text-[28px] font-extrabold', k.c)}>
                 {montant(k.v)} <span className="text-sm">FCFA</span>
               </div>
+              <div className="text-xs text-encre-pale">{k.desc}</div>
             </div>
           ))}
         </div>
@@ -121,10 +123,9 @@ export default function Budget() {
           <div className="bg-attente-barre" style={{ width: `${b.totalPrevision ? Math.min(100, ((b.totalEngage - b.totalRealise) / b.totalPrevision) * 100) : 0}%` }} />
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-encre-pale">
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-depense" />Payé</span>
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-attente-barre" />Engagé, reste à payer</span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-depense" />Dépenses payées</span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-attente-barre" />Dépenses engagées, non payées</span>
           <span>{pct} % du budget engagé</span>
-          <span>« Reste à financer » = budget prévu − cotisations et participations reçues ({montant(s.totalEncaisse)} FCFA)</span>
         </div>
       </section>
 
