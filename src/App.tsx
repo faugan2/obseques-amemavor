@@ -61,7 +61,7 @@ function ParCle({ composant: C }: { composant: React.ComponentType }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/obseques-amemavor/">
       <FournisseurNotifications>
         <FournisseurDonnees>
           <TitreDocument />
