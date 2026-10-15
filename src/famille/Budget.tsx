@@ -80,9 +80,12 @@ function ModalCaisse({ contributions, emprunts = [], onClose }: { contributions:
               <h3 className="font-semibold text-sm mb-2">Emprunts ({empruntsActifs.length})</h3>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {empruntsActifs.map((e) => (
-                  <div key={e.id} className="flex justify-between text-sm bg-[#F7F8F5] p-2 rounded">
-                    <span>{e.prêteur}</span>
-                    <span className="font-bold text-recu">{montant(e.montant)}</span>
+                  <div key={e.id} className="flex flex-wrap justify-between gap-2 text-sm bg-[#F7F8F5] p-2 rounded">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold">{e.prêteur}</div>
+                      {e.commentaire && <div className="text-xs text-encre-pale">{e.commentaire}</div>}
+                    </div>
+                    <span className="font-bold text-recu whitespace-nowrap">{montant(e.montant)}</span>
                   </div>
                 ))}
               </div>
