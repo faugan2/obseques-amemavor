@@ -58,7 +58,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
     const ecouter = <T,>(nom: 'contributions' | 'dons' | 'depenses_new' | 'postes' | 'devis' | 'emprunts' | 'libelles' | 'budget', poser: (l: T[]) => void) => {
       let premier = true;
       const estOrdre = nom === 'postes' || nom === 'libelles';
-      const champTri = estOrdre ? 'ordre' : 'date';
+      const champTri = estOrdre ? 'ordre' : (nom === 'budget' ? 'creeLe' : 'date');
       const sensTri = estOrdre ? 'asc' : 'desc';
 
       console.log(`📂 Chargement de ${nom} depuis ${nomCollection(nom)}...`);
