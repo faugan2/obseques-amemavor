@@ -51,7 +51,7 @@ function Montant({ o }: { o: Operation }) {
   }
   const d = o.source as Depense;
   return d.montantPaye > 0 ? (
-    <span className="font-extrabold text-depense">−{montant(d.montantPaye)}</span>
+    <span className="font-extrabold text-depense">{montant(d.montantPaye)}</span>
   ) : (
     <span className="font-bold text-attente">{montant(d.montant)}</span>
   );
@@ -198,7 +198,6 @@ export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) 
                     <tr className="text-left text-xs uppercase tracking-[0.05em] text-encre-pale">
                       <th className="px-5 py-3 font-bold">Date</th>
                       <th className="px-2.5 py-3 font-bold">Opération</th>
-                      <th className="px-2.5 py-3 font-bold">Statut</th>
                       <th className="px-2.5 py-3 text-right font-bold">Montant</th>
                       <th className="px-5 py-3"><span className="sr-only">Actions</span></th>
                     </tr>
@@ -211,7 +210,6 @@ export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) 
                           <div className={classes('font-bold', o.annule && 'line-through')}>{o.libelle}</div>
                           <div className="text-xs text-encre-pale">{[LIBELLE_TYPE[o.type], o.categorie || o.detail].filter(Boolean).join(' · ')}</div>
                         </td>
-                        <td className="px-2.5 py-3.5"><Statut o={o} /></td>
                         <td className="whitespace-nowrap px-2.5 py-3.5 text-right"><Montant o={o} /></td>
                         <td className="px-5 py-3.5 text-right">
                           <Link to={`/admin/${ROUTE[o.type]}/${o.id}`} className="inline-flex min-h-[36px] items-center rounded-[10px] border border-[#D8DBD3] px-3 text-[13px] font-bold text-encre no-underline hover:bg-fond">
@@ -231,7 +229,6 @@ export default function TableauBord({ typeFixe }: { typeFixe?: TypeOperation }) 
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <span className={classes('truncate font-bold', o.annule && 'line-through')}>{o.libelle}</span>
                         <span className="text-xs text-encre-pale">{dateCourte(o.date)} · {LIBELLE_TYPE[o.type]}</span>
-                        <span><Statut o={o} /></span>
                       </div>
                       <Montant o={o} />
                     </Link>
