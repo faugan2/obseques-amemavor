@@ -141,14 +141,9 @@ export interface Budget {
  */
 export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], libelles: any[] = []): Budget {
   const d = actives(depenses);
-
-  console.log('   budgetLignes[0]:', budgetLignes[0]);
-  console.log('   libelles[0]:', libelles[0]);
-
   const libellesMap = new Map(libelles.map((l: any) => [l.id_libelle || l.id, l]));
 
-
-  const lignes: LigneBudget[] = budgetLignes.map((bl, idx) => {
+  const lignes: LigneBudget[] = budgetLignes.map((bl) => {
     // Récupérer les dépenses liées à ce libellé via id_libelle
     const liees = d.filter((x) => x.id_libelle === bl.id_libelle);
     const realise = somme(liees, (x) => x.montantPaye);
@@ -158,6 +153,25 @@ export function budgetDepuisLignes(budgetLignes: any[], depenses: Depense[], lib
     const libelleData = libellesMap.get(bl.id_libelle);
     const nomFinal = libelleData?.nom || bl.nom || '';
 
+    return {
+      poste: {
+        id: bl.id_libelle,
+        libelle: nomFinal,
+        prevision: bl.prevision,
+        responsable: bl.responsable,
+        financement: bl.financement,
+        commentaire: bl.commentaire,
+        ordre: 0,
+      } as Poste,
+      prevision: bl.prevision,
+      realise,
+      engage,
+      resteAPayer: engage - realise,
+      ecart: (bl.prevision || 0) - engage,
+      nbDepenses: liees.length,
+      devisRetenu: null,
+    };
+  });
 
   const hors = d.filter((x) => !x.id_libelle);
   return {
