@@ -94,7 +94,11 @@ export default function ListeBudget() {
         const fin = l.financement || '';
         return pourRecherche(`${nom} ${resp} ${fin}`).includes(q);
       })
-      .sort((a, b) => (a.libelle?.ordre || 0) - (b.libelle?.ordre || 0));
+      .sort((a, b) => {
+        const nomA = (a.libelle?.nom || '').toUpperCase();
+        const nomB = (b.libelle?.nom || '').toUpperCase();
+        return nomA.localeCompare(nomB);
+      });
   }, [budgetLignes, libelles, recherche]);
 
   const manquantes = libelles.filter((lib) => !budgetLignes.some((bl) => bl.id_libelle === lib.id)).length;
