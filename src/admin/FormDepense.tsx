@@ -48,16 +48,24 @@ function ChampMontant({ id, libelle, valeur, onChange, erreur, aide }: { id: str
 export default function FormDepense() {
   const { id } = useParams();
   const edition = Boolean(id);
-  const { depenses, postes, parametres, chargement } = useDonnees();
-  const postesTries = [...postes].sort((a, b) => a.ordre - b.ordre || a.libelle.localeCompare(b.libelle));
+  const { depenses, libelles, budgetLignes, parametres, chargement } = useDonnees();
+  const libellesTries = [...libelles].sort((a, b) => a.nom.localeCompare(b.nom));
   const [params] = useSearchParams();
   const existante = depenses.find((d) => d.id === id);
   const naviguer = useNavigate();
   const notifier = useNotifier();
 
   const [f, setF] = useState(() => {
-    const p = postes.find((x) => x.id === params.get('poste'));
-    return p ? { ...VIDE, posteId: p.id, responsable: p.responsable, financement: p.financement } : VIDE;
+    const lib = libelles.find((x) => x.id === params.get('poste'));
+    if (!lib) return VIDE;
+    // Récupérer les données du budget ligne pour ce libellé
+    const budgetLigne = budgetLignes.find((bl) => bl.id_libelle === lib.id);
+    return {
+      ...VIDE,
+      posteId: lib.id,
+      responsable: budgetLigne?.responsable || '',
+      financement: budgetLigne?.financement || '',
+    };
   });
   const [fichier, setFichier] = useState<File | null>(null);
   const [motifCorrection, setMotifCorrection] = useState('');
@@ -92,7 +100,9 @@ export default function FormDepense() {
   if (chargement) return <GabaritAdmin titre="Dépense"><Chargement /></GabaritAdmin>;
   if (edition && !existante) return <GabaritAdmin titre="Dépense"><MessageErreur>Cette dépense est introuvable.</MessageErreur></GabaritAdmin>;
 
-  const posteChoisi = postes.find((p) => p.id === f.posteId);
+  const libelleChoisi = libelles.find((l) => l.id === f.posteId);
+  const budgetLigneChoisi = budgetLignes.find((bl) => bl.id_libelle === f.posteId);
+  const categorie = libelleChoisi?.nom || '';
   const total = lireMontant(f.montant);
   const paye = f.statut === 'payee' ? total : f.statut === 'prevue' ? 0 : lireMontant(f.dejaPaye);
   const payeConnu = Number.isFinite(paye) ? paye : 0;
@@ -104,8 +114,9 @@ export default function FormDepense() {
     const brut = {
       date: f.date,
       designation: f.designation.trim(),
-      posteId: f.posteId,
-      categorie: posteChoisi?.libelle ?? (f.posteId ? existante?.categorie ?? '' : ''),
+      id_libelle: f.posteId,
+      posteId: f.posteId, // Garder pour compatibilité
+      categorie: categorie,
       responsable: f.responsable.trim(),
       financement: f.financement.trim(),
       montant: total,
@@ -119,7 +130,7 @@ export default function FormDepense() {
     };
     const res = schemaDepense.safeParse(brut);
     const errs = res.success ? {} : erreursParChamp(res.error);
-    if (!f.posteId) errs.categorie = 'Choisissez le poste du budget.';
+    if (!f.posteId) errs.categorie = 'Choisissez le libellé du budget.';
     if (edition && motifCorrection.trim().length < 3) errs.motifCorrection = 'Indiquez le motif de la correction.';
     setErreurs(errs);
     if (Object.keys(errs).length > 0 || !res.success) return;
@@ -175,24 +186,25 @@ export default function FormDepense() {
               <Champ id="designation" libelle="Désignation" erreur={erreurs.designation}>
                 <input id="designation" className={classes('champ', erreurs.designation && 'champ-erreur')} placeholder="ex. Location de 100 chaises" value={f.designation} onChange={(e) => maj('designation', e.target.value)} />
               </Champ>
-              <Champ id="poste" libelle="Poste du budget" erreur={erreurs.categorie}>
+              <Champ id="poste" libelle="Libellé du budget" erreur={erreurs.categorie}>
                 <select
                   id="poste"
                   className={classes('champ px-3', erreurs.categorie && 'champ-erreur')}
                   value={f.posteId}
                   onChange={(e) => {
-                    const p = postes.find((x) => x.id === e.target.value);
+                    const lib = libelles.find((l) => l.id === e.target.value);
+                    const budgetLigne = budgetLignes.find((bl) => bl.id_libelle === e.target.value);
                     setF((x) => ({
                       ...x,
                       posteId: e.target.value,
-                      // Reprend le responsable et le financement du poste s'ils ne sont pas encore remplis.
-                      responsable: x.responsable || p?.responsable || '',
-                      financement: x.financement || p?.financement || '',
+                      // Reprend le responsable et le financement du budget ligne s'ils ne sont pas encore remplis.
+                      responsable: x.responsable || budgetLigne?.responsable || '',
+                      financement: x.financement || budgetLigne?.financement || '',
                     }));
                   }}
                 >
                   <option value="">Choisir…</option>
-                  {postesTries.filter((p) => !p.annule).map((p) => <option key={p.id} value={p.id}>{p.libelle}</option>)}
+                  {libellesTries.filter((l) => !l.annule).map((l) => <option key={l.id} value={l.id}>{l.nom}</option>)}
                 </select>
               </Champ>
             </div>

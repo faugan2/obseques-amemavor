@@ -25,7 +25,8 @@ export default function FormDevis() {
   const { id } = useParams();
   const [params] = useSearchParams();
   const edition = Boolean(id);
-  const { devis, postes, parametres, chargement } = useDonnees();
+  const { devis, libelles, budgetLignes, parametres, chargement } = useDonnees();
+  const libellesTries = [...libelles].sort((a, b) => a.nom.localeCompare(b.nom));
   const existant = devis.find((d) => d.id === id);
   const naviguer = useNavigate();
   const notifier = useNotifier();
@@ -55,7 +56,7 @@ export default function FormDevis() {
 
   const maj = <K extends keyof typeof VIDE>(k: K, v: (typeof VIDE)[K]) => setF((x) => ({ ...x, [k]: v }));
   const fige = edition && existant && (existant.annule || parametres.cloture);
-  const poste = postes.find((p) => p.id === f.posteId);
+  const libelle = libelles.find((l) => l.id === f.posteId);
 
   if (chargement) return <GabaritAdmin titre="Devis"><Chargement /></GabaritAdmin>;
   if (edition && !existant) return <GabaritAdmin titre="Devis"><MessageErreur>Ce devis est introuvable.</MessageErreur></GabaritAdmin>;
@@ -74,7 +75,7 @@ export default function FormDevis() {
     };
     const res = schemaDevis.safeParse(donnees);
     const errs = res.success ? {} : erreursParChamp(res.error);
-    if (!f.posteId) errs.posteId = 'Choisissez le poste du budget concerné.';
+    if (!f.posteId) errs.posteId = 'Choisissez le libellé du budget concerné.';
     if (edition && motifCorrection.trim().length < 3) errs.motifCorrection = 'Indiquez le motif de la correction.';
     setErreurs(errs);
     if (Object.keys(errs).length > 0 || !res.success) return;
@@ -114,10 +115,10 @@ export default function FormDevis() {
             <Champ id="prestataire" libelle="Prestataire" erreur={erreurs.prestataire}>
               <input id="prestataire" className={classes('champ', erreurs.prestataire && 'champ-erreur')} placeholder="ex. Traiteur Délices de Lomé" value={f.prestataire} onChange={(e) => maj('prestataire', e.target.value)} />
             </Champ>
-            <Champ id="poste" libelle="Poste du budget" erreur={erreurs.posteId}>
+            <Champ id="poste" libelle="Libellé du budget" erreur={erreurs.posteId}>
               <select id="poste" className={classes('champ px-3', erreurs.posteId && 'champ-erreur')} value={f.posteId} onChange={(e) => maj('posteId', e.target.value)}>
                 <option value="">Choisir…</option>
-                {postes.filter((p) => !p.annule).map((p) => <option key={p.id} value={p.id}>{p.libelle}</option>)}
+                {libellesTries.filter((l) => !l.annule).map((l) => <option key={l.id} value={l.id}>{l.nom}</option>)}
               </select>
             </Champ>
           </div>
@@ -125,7 +126,7 @@ export default function FormDevis() {
             <input id="objet" className="champ" placeholder="ex. Déjeuner pour 500 personnes, boissons comprises" value={f.objet} onChange={(e) => maj('objet', e.target.value)} />
           </Champ>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
-            <Champ id="montant" libelle="Montant du devis" erreur={erreurs.montant} aide={poste?.prevision ? `Prévu au budget : ${fcfa(poste.prevision)}` : undefined}>
+            <Champ id="montant" libelle="Montant du devis" erreur={erreurs.montant} aide={budgetLignes.find((bl) => bl.id_libelle === f.posteId)?.prevision ? `Prévu au budget : ${fcfa(budgetLignes.find((bl) => bl.id_libelle === f.posteId)?.prevision || 0)}` : undefined}>
               <div className="relative">
                 <input id="montant" inputMode="numeric" className={classes('champ min-h-[60px] pr-[72px] text-2xl font-extrabold', erreurs.montant && 'champ-erreur')} placeholder="0" value={f.montant} onChange={(e) => maj('montant', e.target.value)} />
                 <span className="absolute right-4 top-5 text-sm font-extrabold text-encre-pale">FCFA</span>
