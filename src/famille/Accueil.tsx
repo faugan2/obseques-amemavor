@@ -38,20 +38,30 @@ export default function Accueil() {
   return (
     <GabaritFamille entete={<Heros />}>
       {b.lignes.length > 0 && (
-        <Link to="/budget" className="carte flex flex-col gap-3 p-5 text-encre no-underline sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-attente-pale text-attente"><IconeBudget /></div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Budget prévisionnel</span>
-                <span className="text-xl font-extrabold">{montant(b.totalPrevision)} FCFA</span>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-              <span>Dépenses : <strong className="text-depense">{montant(b.totalRealise)}</strong></span>
-              <span>Reste à financer : <strong className="text-attente">{montant(Math.max(0, b.totalPrevision - s.totalEncaisse))}</strong></span>
+        <Link to="/budget" className="carte flex flex-col gap-4 p-5 text-encre no-underline sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-attente-pale text-attente"><IconeBudget /></div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-[0.06em] text-encre-pale">Budget prévisionnel</span>
+              <span className="text-xl font-extrabold">{montant(b.totalPrevision)} FCFA</span>
             </div>
           </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-fond p-3">
+              <div className="text-xs font-bold uppercase tracking-[0.05em] text-encre-pale">Caisse reçue</div>
+              <div className="text-sm font-extrabold text-recu">{montant(s.totalEncaisse)}</div>
+            </div>
+            <div className="rounded-lg bg-fond p-3">
+              <div className="text-xs font-bold uppercase tracking-[0.05em] text-encre-pale">Dépenses payées</div>
+              <div className="text-sm font-extrabold text-depense">{montant(s.totalDepense)}</div>
+            </div>
+            <div className="rounded-lg bg-fond p-3">
+              <div className="text-xs font-bold uppercase tracking-[0.05em] text-encre-pale">Solde disponible</div>
+              <div className={`text-sm font-extrabold ${s.solde >= 0 ? 'text-recu' : 'text-depense'}`}>{montant(s.solde)}</div>
+            </div>
+          </div>
+
           <div className="flex h-2.5 overflow-hidden rounded-md bg-trait" role="img" aria-label={`${pctBudget} % du budget engagé`}>
             <div className="h-full bg-attente-barre" style={{ width: `${pctBudget}%` }} />
           </div>
