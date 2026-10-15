@@ -22,6 +22,7 @@ const FormPoste = lazy(() => import('./admin/FormPoste'));
 const FormDevis = lazy(() => import('./admin/FormDevis'));
 const FormEmprunt = lazy(() => import('./admin/FormEmprunt'));
 const FormLibelle = lazy(() => import('./admin/FormLibelle'));
+const FormBudget = lazy(() => import('./admin/FormBudget'));
 const ListeBudget = lazy(() => import('./admin/ListeBudget'));
 const ListeDevis = lazy(() => import('./admin/ListeDevis'));
 const PageEmprunts = lazy(() => import('./admin/Emprunts'));
@@ -104,6 +105,7 @@ export default function App() {
                 <Route path="/admin/libelles" element={admin(<PageLibelles />)} />
                 <Route path="/admin/libelle/nouveau" element={admin(<FormLibelle key="nouveau" />)} />
                 <Route path="/admin/libelle/:id" element={admin(<ParCle composant={FormLibelle} />)} />
+                <Route path="/admin/budget/:id" element={admin(<ParCle composant={FormBudget} />)} />
                 <Route path="/admin/importer-libelles" element={admin(<PageImporterLibelles />)} />
                 <Route path="/admin/historique" element={admin(<Historique />)} />
                 <Route path="/admin/rapport" element={admin(<Rapport />)} />
