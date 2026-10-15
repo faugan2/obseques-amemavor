@@ -4,9 +4,10 @@
 //   démo : ame_demo_contributions, ame_demo_dons, ...
 // Les administrateurs (ame_admins) sont communs aux deux espaces.
 
-export type NomCollection = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'historique' | 'parametres';
+export type NomCollection = 'contributions' | 'dons' | 'depenses' | 'postes' | 'devis' | 'emprunts' | 'libelles' | 'historique' | 'parametres';
 
-export const ESPACE: 'demo' | 'reel' = import.meta.env.VITE_ESPACE === 'reel' ? 'reel' : 'demo';
+// Utiliser toujours le mode démo (ame_demo_...)
+export const ESPACE: 'demo' | 'reel' = 'demo';
 export const EST_DEMO = ESPACE === 'demo';
 
 export function nomCollection(nom: NomCollection, espace: 'demo' | 'reel' = ESPACE): string {
