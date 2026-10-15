@@ -12,12 +12,10 @@ import type { StatutDevis } from '../types';
 const VIDE = {
   prestataire: '',
   posteId: '',
-  objet: '',
   montant: '',
   date: aujourdHui(),
   statut: 'recu' as StatutDevis,
-  reference: '',
-  commentaire: '',
+  photo: null as File | null,
 };
 
 /** Création et modification d'un devis de prestataire. */
@@ -43,12 +41,10 @@ export default function FormDevis() {
       setF({
         prestataire: existant.prestataire,
         posteId: existant.posteId,
-        objet: existant.objet,
         montant: String(existant.montant),
         date: existant.date,
         statut: existant.statut,
-        reference: existant.reference,
-        commentaire: existant.commentaire,
+        photo: null,
       });
       setInitialise(true);
     }
@@ -60,17 +56,17 @@ export default function FormDevis() {
   if (chargement) return <GabaritAdmin titre="Devis"><Chargement /></GabaritAdmin>;
   if (edition && !existant) return <GabaritAdmin titre="Devis"><MessageErreur>Ce devis est introuvable.</MessageErreur></GabaritAdmin>;
 
-  const enregistrer = async (ajouterAutre: boolean) => {
+  const enregistrer = async () => {
     setErreurGenerale('');
     const donnees = {
       prestataire: f.prestataire.trim().replace(/\s+/g, ' '),
       posteId: f.posteId,
-      objet: f.objet.trim(),
       montant: lireMontant(f.montant),
       date: f.date,
       statut: f.statut,
-      reference: f.reference.trim(),
-      commentaire: f.commentaire.trim(),
+      objet: '',
+      reference: '',
+      commentaire: '',
     };
     const res = schemaDevis.safeParse(donnees);
     const errs = res.success ? {} : erreursParChamp(res.error);
@@ -89,8 +85,7 @@ export default function FormDevis() {
       } else {
         await creer('devis', res.data, libelle);
         notifier(`Devis de ${res.data.prestataire} enregistré (${fcfa(res.data.montant)}).`);
-        if (ajouterAutre) setF({ ...VIDE, posteId: f.posteId, date: f.date });
-        else naviguer('/admin/devis');
+        naviguer('/admin/devis');
       }
     } catch (e) {
       setErreurGenerale(messageEcriture(e));
@@ -101,7 +96,7 @@ export default function FormDevis() {
 
   const soumettre = (e: FormEvent) => {
     e.preventDefault();
-    void enregistrer(false);
+    void enregistrer();
   };
 
   return (
@@ -121,9 +116,6 @@ export default function FormDevis() {
               </select>
             </Champ>
           </div>
-          <Champ id="objet" libelle="Objet du devis" facultatif>
-            <input id="objet" className="champ" placeholder="ex. Déjeuner pour 500 personnes, boissons comprises" value={f.objet} onChange={(e) => maj('objet', e.target.value)} />
-          </Champ>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
             <Champ id="montant" libelle="Montant du devis" erreur={erreurs.montant} aide={budgetLignes.find((bl) => bl.id_libelle === f.posteId)?.prevision ? `Prévu au budget : ${fcfa(budgetLignes.find((bl) => bl.id_libelle === f.posteId)?.prevision || 0)}` : undefined}>
               <div className="relative">
@@ -145,14 +137,11 @@ export default function FormDevis() {
               { valeur: 'refuse', libelle: 'Non retenu', aide: 'Offre écartée', ton: 'depense' },
             ]}
           />
-          <Champ id="reference" libelle="Référence du devis" facultatif>
-            <input id="reference" className="champ" placeholder="ex. Devis n° 2026-118" value={f.reference} onChange={(e) => maj('reference', e.target.value)} />
-          </Champ>
-          <Champ id="commentaire" libelle="Commentaire" facultatif>
-            <textarea id="commentaire" rows={2} className="champ py-3" placeholder="ex. Acompte de 50 % à la commande" value={f.commentaire} onChange={(e) => maj('commentaire', e.target.value)} />
+          <Champ id="photo" libelle="Photo du devis" facultatif>
+            <input id="photo" type="file" accept="image/*" className="champ" onChange={(e) => maj('photo', e.target.files?.[0] || null)} />
           </Champ>
           {edition && <MotifCorrection valeur={motifCorrection} onChange={setMotifCorrection} erreur={erreurs.motifCorrection} />}
-          <BoutonsEnregistrer envoi={envoi} edition={edition} couleur="bg-foret" libelle="Enregistrer le devis" onAutre={() => void enregistrer(true)} />
+          <BoutonsEnregistrer envoi={envoi} edition={edition} couleur="bg-foret" libelle="Enregistrer le devis" />
         </fieldset>
         {edition && existant && !fige && (
           <div className="border-t border-trait pt-4">
