@@ -73,8 +73,11 @@ export default function Rapport() {
           <h2 className="font-titre text-[21px] font-normal">1. Point global</h2>
           <table className="w-full border-collapse text-[14px]">
             <tbody>
+              <tr><td className={td}>Emprunts reçus</td><td className={`${td} text-right font-bold text-recu-fonce`}>{montant(s.totalEmprunts)}</td></tr>
               <tr><td className={td}>Participations en argent</td><td className={`${td} text-right font-bold text-recu-fonce`}>{montant(s.totalParticipations)}</td></tr>
+              <tr className="bg-[#F3F4F0]"><td className="px-1.5 py-2 font-bold">Fond de roulement</td><td className={`px-1.5 py-2 text-right font-bold text-recu-fonce`}>{montant(s.totalEmprunts + s.totalParticipations)}</td></tr>
               <tr><td className={td}>Dépenses payées</td><td className={`${td} text-right font-bold text-depense-fonce`}>− {montant(s.totalDepense)}</td></tr>
+              <tr><td className={td}>Remboursements emprunts</td><td className={`${td} text-right font-bold text-depense-fonce`}>− {montant(s.totalEmpruntsRembourses)}</td></tr>
               <tr className="text-[16px]"><td className="px-1.5 py-2.5 font-extrabold">Reliquat (solde en caisse)</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.solde)} FCFA</td></tr>
             </tbody>
           </table>
