@@ -137,7 +137,7 @@ export default function Rapport() {
           <h2 className="font-titre text-[21px] font-normal">5. Emprunts</h2>
           {empruntsActifs.length === 0 ? <p className="text-encre-pale">Aucun.</p> : (
             <table className="w-full border-collapse text-[13px]">
-              <thead><tr><th className={th}>Date</th><th className={th}>Prêteur</th><th className={`${th} text-right`}>Montant (FCFA)</th><th className={`${th} text-right`}>Remboursé (FCFA)</th><th className={`${th} text-right`}>Solde (FCFA)</th><th className={th}>État</th></tr></thead>
+              <thead><tr><th className={th}>Date</th><th className={th}>Prêteur</th><th className={`${th} text-right`}>Montant (FCFA)</th><th className={`${th} text-right`}>Remboursé (FCFA)</th><th className={`${th} text-right`}>Solde (FCFA)</th></tr></thead>
               <tbody>
                 {empruntsActifs.map((e) => (
                   <tr key={e.id}>
@@ -146,10 +146,9 @@ export default function Rapport() {
                     <td className={`${td} text-right`}>{montant(e.montant)}</td>
                     <td className={`${td} text-right`}>{montant(e.montantRembourse)}</td>
                     <td className={`${td} text-right`}>{montant(e.montant - e.montantRembourse)}</td>
-                    <td className={td}>{e.statut === 'rembourse' ? 'Remboursé' : e.statut === 'partielle' ? 'Partiellement remboursé' : 'Annoncé'}</td>
                   </tr>
                 ))}
-                <tr><td colSpan={2} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmprunts)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmpruntsRembourses)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmprunts - s.totalEmpruntsRembourses)}</td><td></td></tr>
+                <tr><td colSpan={2} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmprunts)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmpruntsRembourses)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmprunts - s.totalEmpruntsRembourses)}</td></tr>
               </tbody>
             </table>
           )}
