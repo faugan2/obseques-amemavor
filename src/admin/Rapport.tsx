@@ -12,13 +12,14 @@ const th = 'border-b-[1.5px] border-encre px-1.5 py-2 text-left font-bold';
 const td = 'border-b border-[#C9CDC4] px-1.5 py-2 align-top';
 
 export default function Rapport() {
-  const { contributions, dons, depenses, postes, devis, synthese: s, budget: b, parametres, libelles, budgetLignes } = useDonnees();
+  const { contributions, dons, depenses, emprunts, postes, devis, synthese: s, budget: b, parametres, libelles, budgetLignes } = useDonnees();
   const [erreur, setErreur] = useState('');
   const [export_, setExport] = useState(false);
 
   const recues = contributions.filter((c) => !c.annule && c.montantRecu > 0 && typeDe(c) === 'participation');
   const promesses = contributions.filter((c) => !c.annule && c.montant > c.montantRecu && typeDe(c) === 'participation');
   const donsActifs = dons.filter((d) => !d.annule);
+  const empruntsActifs = emprunts.filter((e) => !e.annule);
   const payees = depenses.filter((d) => !d.annule && d.montantPaye > 0);
   const nonSoldees = depenses.filter((d) => !d.annule && d.montant > d.montantPaye);
   const annulees = [
@@ -130,7 +131,29 @@ export default function Rapport() {
         </section>
 
         <section className="flex flex-col gap-2.5">
-          <h2 className="font-titre text-[21px] font-normal">5. Dépenses payées</h2>
+          <h2 className="font-titre text-[21px] font-normal">5. Emprunts</h2>
+          {empruntsActifs.length === 0 ? <p className="text-encre-pale">Aucun.</p> : (
+            <table className="w-full border-collapse text-[13px]">
+              <thead><tr><th className={th}>Date</th><th className={th}>Prêteur</th><th className={`${th} text-right`}>Montant (FCFA)</th><th className={`${th} text-right`}>Remboursé (FCFA)</th><th className={`${th} text-right`}>Solde (FCFA)</th><th className={th}>État</th></tr></thead>
+              <tbody>
+                {empruntsActifs.map((e) => (
+                  <tr key={e.id}>
+                    <td className={td}>{dateCourte(e.date)}</td>
+                    <td className={td}><div className="font-semibold">{e.preteur}</div>{e.commentaire && <div className="text-xs text-encre-pale">{e.commentaire}</div>}</td>
+                    <td className={`${td} text-right`}>{montant(e.montant)}</td>
+                    <td className={`${td} text-right`}>{montant(e.montantRembourse)}</td>
+                    <td className={`${td} text-right`}>{montant(e.montant - e.montantRembourse)}</td>
+                    <td className={td}>{e.statut === 'rembourse' ? 'Remboursé' : e.statut === 'partielle' ? 'Partiellement remboursé' : 'Annoncé'}</td>
+                  </tr>
+                ))}
+                <tr><td colSpan={2} className="px-1.5 py-2.5 font-extrabold">Total</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmprunts)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmpruntsRembourses)}</td><td className="px-1.5 py-2.5 text-right font-extrabold">{montant(s.totalEmprunts - s.totalEmpruntsRembourses)}</td><td></td></tr>
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-titre text-[21px] font-normal">6. Dépenses payées</h2>
           {payees.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
             <table className="w-full border-collapse text-[13px]">
               <thead><tr><th className={th}>Date</th><th className={th}>Désignation</th><th className={th}>Poste</th><th className={th}>Responsable · financement</th><th className={`${th} text-right`}>Payé (FCFA)</th></tr></thead>
@@ -145,7 +168,7 @@ export default function Rapport() {
         </section>
 
         <section className="flex flex-col gap-2.5 rounded-[10px] border-[1.5px] border-dashed border-or-fonce p-4">
-          <h2 className="font-titre text-[21px] font-normal">6. Restes à payer et sommes attendues (hors solde)</h2>
+          <h2 className="font-titre text-[21px] font-normal">7. Restes à payer et sommes attendues (hors solde)</h2>
           <table className="w-full border-collapse text-[13px]">
             <thead><tr><th className={th}>Type</th><th className={th}>Libellé</th><th className={`${th} text-right`}>Reste (FCFA)</th></tr></thead>
             <tbody>
