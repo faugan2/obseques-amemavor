@@ -17,11 +17,9 @@ export default function Rapport() {
   const [export_, setExport] = useState(false);
 
   const recues = contributions.filter((c) => !c.annule && c.montantRecu > 0 && typeDe(c) === 'participation');
-  const promesses = contributions.filter((c) => !c.annule && c.montant > c.montantRecu && typeDe(c) === 'participation');
   const donsActifs = dons.filter((d) => !d.annule);
   const empruntsActifs = emprunts.filter((e) => !e.annule);
   const payees = depenses.filter((d) => !d.annule && d.montantPaye > 0);
-  const nonSoldees = depenses.filter((d) => !d.annule && d.montant > d.montantPaye);
   const annulees = [
     ...contributions.filter((c) => c.annule).map((c) => ({ id: c.id, t: 'Contribution', l: c.contributeur, m: c.motifAnnulation })),
     ...dons.filter((d) => d.annule).map((d) => ({ id: d.id, t: 'Don', l: `${d.quantite} ${d.unite} · ${d.donateur}`, m: d.motifAnnulation })),
@@ -167,25 +165,6 @@ export default function Rapport() {
               </tbody>
             </table>
           )}
-        </section>
-
-        <section className="flex flex-col gap-2.5 rounded-[10px] border-[1.5px] border-dashed border-or-fonce p-4">
-          <h2 className="font-titre text-[21px] font-normal">7. Restes à payer et sommes attendues (hors solde)</h2>
-          <table className="w-full border-collapse text-[13px]">
-            <thead><tr><th className={th}>Type</th><th className={th}>Libellé</th><th className={`${th} text-right`}>Reste (FCFA)</th></tr></thead>
-            <tbody>
-              {nonSoldees.map((d) => (
-                <tr key={d.id}><td className={td}>Dépense {d.statut === 'partielle' ? 'partielle' : 'prévue'}</td><td className={td}>{d.designation}</td><td className={`${td} text-right`}>{montant(d.montant - d.montantPaye)}</td></tr>
-              ))}
-{promesses.map((c) => (
-                <tr key={c.id}><td className={td}>Participation annoncée</td><td className={td}>{c.contributeur}</td><td className={`${td} text-right`}>{montant(c.montant - c.montantRecu)}</td></tr>
-              ))}
-              {nonSoldees.length + promesses.length === 0 && <tr><td colSpan={3} className={td}>Aucun engagement en attente.</td></tr>}
-            </tbody>
-          </table>
-          <div className="text-[13px] font-bold">
-            Solde prévisionnel (après règlement des dépenses et réception des sommes attendues) : {montant(s.solde - s.resteAPayer + s.promessesEnAttente)} FCFA
-          </div>
         </section>
 
         {annulees.length > 0 && (
