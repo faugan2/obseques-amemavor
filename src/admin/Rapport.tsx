@@ -11,10 +11,26 @@ import { dateCourte, dateHeure, libelleMode, montant } from '../lib/format';
 const th = 'border-b-[1.5px] border-encre px-1.5 py-2 text-left font-bold';
 const td = 'border-b border-[#C9CDC4] px-1.5 py-2 align-top';
 
+const SECTIONS = [
+  { id: 'global', titre: '1. Point global' },
+  { id: 'budget', titre: '2. Budget' },
+  { id: 'participations', titre: '3. Participations en argent' },
+  { id: 'nature', titre: '4. Participations en nature' },
+  { id: 'emprunts', titre: '5. Emprunts' },
+  { id: 'depenses', titre: '6. Dépenses payées' },
+  { id: 'annulees', titre: 'Opérations annulées' },
+];
+
 export default function Rapport() {
   const { contributions, dons, depenses, emprunts, postes, devis, synthese: s, budget: b, parametres, libelles, budgetLignes } = useDonnees();
   const [erreur, setErreur] = useState('');
   const [export_, setExport] = useState(false);
+  const [choisies, setChoisies] = useState<string[]>(SECTIONS.map((x) => x.id));
+
+  const basculer = (id: string) =>
+    setChoisies((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
+  /** Une section non cochée reste visible à l'écran mais disparaît à l'impression. */
+  const bloc = (id: string) => (choisies.includes(id) ? '' : 'print:hidden');
 
   const recues = contributions.filter((c) => !c.annule && c.montantRecu > 0 && typeDe(c) === 'participation');
   const donsActifs = dons.filter((d) => !d.annule);
@@ -57,6 +73,18 @@ export default function Rapport() {
       {erreur && <MessageErreur>{erreur}</MessageErreur>}
       <p className="pas-imprimer -mt-2 text-[13px] text-encre-pale">Pour un PDF : « Imprimer / PDF », puis choisir « Enregistrer au format PDF » comme imprimante.</p>
 
+      <div className="pas-imprimer flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-bord bg-white p-3 text-sm">
+        <span className="font-bold">Sections à imprimer :</span>
+        {SECTIONS.map((x) => (
+          <label key={x.id} className="flex items-center gap-1.5">
+            <input type="checkbox" checked={choisies.includes(x.id)} onChange={() => basculer(x.id)} />
+            {x.titre}
+          </label>
+        ))}
+        <button type="button" onClick={() => setChoisies(SECTIONS.map((x) => x.id))} className="font-bold text-recu-fonce underline">Tout</button>
+        <button type="button" onClick={() => setChoisies([])} className="font-bold text-recu-fonce underline">Aucune</button>
+      </div>
+
       <article className="mx-auto flex w-full max-w-[794px] flex-col gap-7 bg-white p-6 text-sm leading-normal shadow-flottante sm:p-[56px] print:max-w-none print:p-0 print:shadow-none">
         <header className="flex items-start justify-between gap-6 border-b-2 border-or pb-5">
           <div className="flex flex-col gap-1">
@@ -67,7 +95,7 @@ export default function Rapport() {
           {EST_DEMO && <div className="whitespace-nowrap rounded-md border-[1.5px] border-or-fonce px-2.5 py-1.5 text-[11px] font-extrabold text-or-fonce">DONNÉES FICTIVES</div>}
         </header>
 
-        <section className="flex flex-col gap-2.5">
+        <section className={`flex flex-col gap-2.5 ${bloc('global')}`}>
           <h2 className="font-titre text-[21px] font-normal">1. Point global</h2>
           <table className="w-full border-collapse text-[14px]">
             <tbody>
@@ -84,7 +112,7 @@ export default function Rapport() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-2.5">
+        <section className={`flex flex-col gap-2.5 ${bloc('budget')}`}>
           <h2 className="font-titre text-[21px] font-normal">2. Budget : prévisions et réalisations</h2>
           <table className="w-full border-collapse text-[12px]">
             <thead><tr><th className={th}>Poste</th><th className={th}>Responsable</th><th className={th}>Financement</th><th className={`${th} text-right`}>Prévu</th><th className={`${th} text-right`}>Payé</th></tr></thead>
@@ -101,7 +129,7 @@ export default function Rapport() {
           {b.nbPostesNonChiffres > 0 && <div className="text-xs text-encre-douce">{b.nbPostesNonChiffres} poste(s) encore à chiffrer ne figurent pas dans ce tableau.</div>}
         </section>
 
-        <section className="flex flex-col gap-2.5">
+        <section className={`flex flex-col gap-2.5 ${bloc('participations')}`}>
           <h2 className="font-titre text-[21px] font-normal">3. Participations en argent</h2>
           {recues.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
             <table className="w-full border-collapse text-[13px]">
@@ -116,7 +144,7 @@ export default function Rapport() {
           )}
         </section>
 
-        <section className="flex flex-col gap-2.5">
+        <section className={`flex flex-col gap-2.5 ${bloc('nature')}`}>
           <h2 className="font-titre text-[21px] font-normal">4. Participations en nature</h2>
           {donsActifs.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
             <table className="w-full border-collapse text-[13px]">
@@ -131,7 +159,7 @@ export default function Rapport() {
           <div className="text-xs text-encre-douce">Les dons en nature ne sont pas inclus dans le solde financier. Les valeurs estimées éventuelles sont indicatives.</div>
         </section>
 
-        <section className="flex flex-col gap-2.5">
+        <section className={`flex flex-col gap-2.5 ${bloc('emprunts')}`}>
           <h2 className="font-titre text-[21px] font-normal">5. Emprunts</h2>
           {empruntsActifs.length === 0 ? <p className="text-encre-pale">Aucun.</p> : (
             <table className="w-full border-collapse text-[13px]">
@@ -152,7 +180,7 @@ export default function Rapport() {
           )}
         </section>
 
-        <section className="flex flex-col gap-2.5">
+        <section className={`flex flex-col gap-2.5 ${bloc('depenses')}`}>
           <h2 className="font-titre text-[21px] font-normal">6. Dépenses payées</h2>
           {payees.length === 0 ? <p className="text-encre-pale">Aucune.</p> : (
             <table className="w-full border-collapse text-[13px]">
@@ -168,7 +196,7 @@ export default function Rapport() {
         </section>
 
         {annulees.length > 0 && (
-          <section className="flex flex-col gap-2">
+          <section className={`flex flex-col gap-2 ${bloc('annulees')}`}>
             <h2 className="font-titre text-lg font-normal">Opérations annulées (pour mémoire)</h2>
             <ul className="list-disc pl-5 text-[13px] text-encre-douce">
               {annulees.map((a) => <li key={a.id}>{a.t} · {a.l}{a.m ? ` — ${a.m}` : ''}</li>)}
